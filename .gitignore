@@ -12,7 +12,6 @@ backend/venv/
 
 # Env files / secrets
 .env
-.env.*
 backend/.env
 frontend/.env
 
