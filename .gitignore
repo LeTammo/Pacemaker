@@ -1,0 +1,63 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Virtual environments
+venv/
+.venv/
+backend/venv/
+
+# Env files / secrets
+.env
+.env.*
+backend/.env
+frontend/.env
+
+# Python packaging
+*.egg-info/
+build/
+dist/
+
+# SQLite / DB files
+*.db
+*.sqlite
+data/
+backend/data/
+
+# Logs
+*.log
+logs/
+
+# Editor directories
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# Node / Next
+node_modules/
+frontend/node_modules/
+.next/
+frontend/.next/
+out/
+
+# TypeScript
+*.tsbuildinfo
+
+# Testing / coverage
+.pytest_cache/
+coverage/
+coverage.xml
+htmlcov/
+
+# Docker
+docker-compose.override.yml
+docker-compose.override.yaml
+
+# Misc
+*.pem
+*.key
