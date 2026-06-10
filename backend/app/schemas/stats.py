@@ -16,12 +16,22 @@ class ActivityStats(BaseModel):
     total_running_distance_km: float
     total_swimming_distance_km: float
     total_cycling_distance_km: float
+    average_activity_distance_km: float
+    average_activity_duration_minutes: float
+    total_runs: int
+    total_swims: int
+    longest_run_km: float | None
+    average_run_pace_seconds: float | None
+    fastest_run_pace_seconds: float | None
+    average_run_distance_km: float | None
+    average_swim_distance_km: float | None
     activities_this_week: int
     activities_this_month: int
     average_activities_per_week: float
     average_distance_per_week_km: float
     total_duration_hours: float
-    total_calories: int
+    average_runs_per_week: float
+    average_swims_per_week: float
 
 
 class RunningStats(BaseModel):

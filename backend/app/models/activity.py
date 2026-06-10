@@ -43,14 +43,25 @@ class Activity(Base):
     # Running specific
     average_cadence: Mapped[int | None] = mapped_column(Integer)
     average_running_cadence: Mapped[float | None] = mapped_column(Float)
+    max_running_cadence: Mapped[float | None] = mapped_column(Float)
     average_stride_length: Mapped[float | None] = mapped_column(Float)
     vertical_oscillation: Mapped[float | None] = mapped_column(Float)
     ground_contact_time: Mapped[float | None] = mapped_column(Float)
+    lap_count: Mapped[int | None] = mapped_column(Integer)
+    has_splits: Mapped[bool | None] = mapped_column(Boolean)
+    has_intensity_intervals: Mapped[bool | None] = mapped_column(Boolean)
+    fastest_split_1000: Mapped[float | None] = mapped_column(Float)
+    fastest_split_1609: Mapped[float | None] = mapped_column(Float)
 
     # Swimming specific
     pool_length: Mapped[float | None] = mapped_column(Float)
     average_swolf: Mapped[float | None] = mapped_column(Float)
+    average_swim_cadence: Mapped[float | None] = mapped_column(Float)
     stroke_type: Mapped[str | None] = mapped_column(String(64))
+    active_lengths: Mapped[int | None] = mapped_column(Integer)
+    strokes: Mapped[float | None] = mapped_column(Float)
+    average_strokes: Mapped[float | None] = mapped_column(Float)
+    water_estimated: Mapped[float | None] = mapped_column(Float)
 
     # Location
     start_latitude: Mapped[float | None] = mapped_column(Float)

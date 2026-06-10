@@ -62,11 +62,174 @@ def _normalize_activity_type(raw: dict) -> str:
 
 # ── Activity transformation ───────────────────────────────────────────────────
 
+
+def compute_per_km_splits(metric_descriptors: list | None, detail_metrics: list | None, total_distance_m: float | None) -> list | None:
+    """Compute per-km splits from activityDetailMetrics using metric_descriptors.
+
+    Returns an array of splits with fields:
+      - index (1-based)
+      - split_distance_m
+      - split_time_s
+      - pace_s_per_km
+      - cumulative_time_s
+      - cumulative_distance_m
+    """
+    if not metric_descriptors or not detail_metrics:
+        return None
+
+    # Build key -> metricsIndex map
+    idx_map: dict[str, int] = {}
+    for d in metric_descriptors:
+        k = d.get("key")
+        mi = d.get("metricsIndex")
+        if k and mi is not None:
+            idx_map[k] = int(mi)
+
+    # Try to find sumDuration and sumDistance indices (be flexible with naming)
+    sum_duration_idx = idx_map.get("sumDuration") or idx_map.get("sumElapsedDuration") or idx_map.get("sumMovingDuration")
+    sum_distance_idx = idx_map.get("sumDistance") or idx_map.get("sumDistanceMeters")
+
+    if sum_duration_idx is None or sum_distance_idx is None:
+        return None
+
+    # Extract cumulative tuples (distance_m, time_s) from detail_metrics
+    points: list[tuple[float, float]] = []
+    for entry in detail_metrics:
+        metrics = entry.get("metrics") if isinstance(entry, dict) else None
+        if not metrics or len(metrics) <= max(sum_duration_idx, sum_distance_idx):
+            continue
+        try:
+            cum_time = metrics[sum_duration_idx]
+            cum_dist = metrics[sum_distance_idx]
+            if cum_time is None or cum_dist is None:
+                continue
+            # Ensure floats
+            cum_time = float(cum_time)
+            cum_dist = float(cum_dist)
+            # Ignore NaNs
+            if not (cum_time >= 0 and cum_dist >= 0):
+                continue
+            points.append((cum_dist, cum_time))
+        except Exception:
+            continue
+
+    if not points:
+        return None
+
+    # Ensure points are sorted by cumulative time (or distance)
+    points.sort(key=lambda x: (x[1], x[0]))
+
+    # If total_distance_m provided, cap target at that, otherwise use last point distance
+    final_distance = float(total_distance_m) if total_distance_m else points[-1][0]
+    if final_distance <= 0:
+        return None
+
+    splits: list[dict] = []
+    next_target = 1000.0
+    prev_dist, prev_time = points[0]
+    # if first point has distance >0 but prev may be 0 - ensure starting at (0,0)
+    if prev_time != 0 and prev_dist != 0:
+        # prepend origin
+        points.insert(0, (0.0, 0.0))
+        prev_dist, prev_time = 0.0, 0.0
+
+    i = 0
+    point_count = len(points)
+    # iterate targets until pass final_distance
+    split_index = 1
+    while next_target <= final_distance + 1e-6:
+        # advance to the segment containing next_target
+        while i + 1 < point_count and points[i+1][0] < next_target:
+            i += 1
+        if i + 1 >= point_count:
+            # no further points to interpolate; break
+            break
+        d0, t0 = points[i]
+        d1, t1 = points[i+1]
+        if d1 == d0:
+            frac = 0.0
+        else:
+            frac = (next_target - d0) / (d1 - d0)
+            frac = max(0.0, min(1.0, frac))
+        target_time = t0 + frac * (t1 - t0)
+        # compute previous target cumulative time
+        prev_target = (split_index - 1) * 1000.0
+        # find prev_target_time: either exact previous split or interpolate from points
+        if split_index == 1:
+            prev_target_time = 0.0
+        else:
+            prev_target_time = splits[-1]["cumulative_time_s"]
+        split_time = target_time - prev_target_time
+        if split_time <= 0:
+            pace = None
+        else:
+            pace = split_time / (1000.0 / 1000.0) if 1000.0 else None
+        splits.append({
+            "index": split_index,
+            "split_distance_m": round(min(1000.0, next_target - prev_target), 3),
+            "split_time_s": round(split_time, 3),
+            "pace_s_per_km": round(split_time, 3) if split_time > 0 else None,
+            "cumulative_time_s": round(target_time, 3),
+            "cumulative_distance_m": round(next_target, 3),
+        })
+        split_index += 1
+        next_target += 1000.0
+
+    # Optionally include final partial split if final_distance not exact multiple
+    last_target = (split_index - 1) * 1000.0
+    if final_distance - last_target > 1e-3:
+        # find time at final_distance by interpolating between last two points
+        # find segment containing final_distance
+        j = point_count - 2
+        while j >= 0 and points[j+1][0] < final_distance:
+            j -= 1
+        if j < 0:
+            j = 0
+        d0, t0 = points[j]
+        d1, t1 = points[j+1] if j+1 < point_count else points[j]
+        if d1 == d0:
+            frac = 0.0
+        else:
+            frac = (final_distance - d0) / (d1 - d0)
+            frac = max(0.0, min(1.0, frac))
+        final_time = t0 + frac * (t1 - t0)
+        prev_target_time = splits[-1]["cumulative_time_s"] if splits else 0.0
+        split_time = final_time - prev_target_time
+        splits.append({
+            "index": split_index,
+            "split_distance_m": round(final_distance - last_target, 3),
+            "split_time_s": round(split_time, 3),
+            "pace_s_per_km": round(split_time * (1000.0 / (final_distance - last_target)), 3) if split_time > 0 else None,
+            "cumulative_time_s": round(final_time, 3),
+            "cumulative_distance_m": round(final_distance, 3),
+            "partial": True,
+        })
+
+    return splits
+
+
 def transform_activity(raw: dict) -> dict:
     """Map Garmin API dict to Activity model fields."""
     activity_id = str(raw.get("activityId", ""))
     activity_type = _normalize_activity_type(raw)
     avg_speed = _safe_float(raw.get("averageSpeed"))
+
+    # Preserve raw splitSummaries/laps, but compute per-km splits for running activities when possible
+    native_summaries = raw.get("splitSummaries") or raw.get("splits") or None
+    laps = raw.get("lapSummaries") or raw.get("laps") or None
+
+    computed_splits = None
+    try:
+        if activity_type == "running":
+            metric_descriptors = raw.get("metricDescriptors")
+            detail_metrics = raw.get("activityDetailMetrics")
+            total_distance = _safe_float(raw.get("distance"))
+            computed = compute_per_km_splits(metric_descriptors, detail_metrics, total_distance)
+            if computed:
+                computed_splits = computed
+    except Exception:
+        # don't fail entire transform if split computation fails
+        computed_splits = None
 
     return {
         "garmin_id": activity_id,
@@ -92,12 +255,23 @@ def transform_activity(raw: dict) -> dict:
         "max_elevation": _safe_float(raw.get("maxElevation")),
         "average_cadence": _safe_int(raw.get("averageBikingCadenceInRevPerMinute") or raw.get("averageRunningCadenceInStepsPerMinute")),
         "average_running_cadence": _safe_float(raw.get("averageRunningCadenceInStepsPerMinute")),
+        "max_running_cadence": _safe_float(raw.get("maxRunningCadenceInStepsPerMinute")),
         "average_stride_length": _safe_float(raw.get("averageStrideLength")),
         "vertical_oscillation": _safe_float(raw.get("avgVerticalOscillation")),
         "ground_contact_time": _safe_float(raw.get("avgGroundContactTime")),
+        "lap_count": _safe_int(raw.get("lapCount")),
+        "has_splits": bool(raw.get("hasSplits")) if raw.get("hasSplits") is not None else None,
+        "has_intensity_intervals": bool(raw.get("hasIntensityIntervals")) if raw.get("hasIntensityIntervals") is not None else None,
+        "fastest_split_1000": _safe_float(raw.get("fastestSplit_1000")),
+        "fastest_split_1609": _safe_float(raw.get("fastestSplit_1609")),
         "pool_length": _safe_float(raw.get("poolLength")),
         "average_swolf": _safe_float(raw.get("averageSwolf")),
+        "average_swim_cadence": _safe_float(raw.get("averageSwimCadenceInStrokesPerMinute")),
         "stroke_type": raw.get("strokeType"),
+        "active_lengths": _safe_int(raw.get("activeLengths")),
+        "strokes": _safe_float(raw.get("strokes")),
+        "average_strokes": _safe_float(raw.get("avgStrokes")),
+        "water_estimated": _safe_float(raw.get("waterEstimated")),
         "start_latitude": _safe_float(raw.get("startLatitude")),
         "start_longitude": _safe_float(raw.get("startLongitude")),
         "end_latitude": _safe_float(raw.get("endLatitude")),
@@ -106,6 +280,8 @@ def transform_activity(raw: dict) -> dict:
         "training_effect": _safe_float(raw.get("aerobicTrainingEffect")),
         "anaerobic_training_effect": _safe_float(raw.get("anaerobicTrainingEffect")),
         "vo2_max": _safe_float(raw.get("vO2MaxValue")),
+        "splits": computed_splits or native_summaries,
+        "laps": laps,
         "raw_data": raw,
         "synced_at": datetime.now(timezone.utc),
     }
@@ -201,6 +377,28 @@ class SyncService:
         synced = 0
         for raw in raw_activities:
             try:
+                activity_type = _normalize_activity_type(raw)
+                activity_id = str(raw.get("activityId", ""))
+                if activity_type in {"running", "lap_swimming"} and activity_id:
+                    try:
+                        details = await garmin_service.get_activity_details(activity_id)
+                        if details:
+                            merged = dict(raw)
+                            merged.update(details)
+                            raw = merged
+                            logger.info(
+                                "Loaded detailed activity payload",
+                                activity_id=activity_id,
+                                activity_type=activity_type,
+                            )
+                    except Exception as e:
+                        logger.warning(
+                            "Could not load detailed activity payload",
+                            activity_id=activity_id,
+                            activity_type=activity_type,
+                            error=str(e),
+                        )
+
                 data = transform_activity(raw)
                 garmin_id = data["garmin_id"]
                 if not garmin_id:

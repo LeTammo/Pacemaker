@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.db.database import get_db
@@ -10,18 +10,23 @@ router = APIRouter(prefix="/activities", tags=["activities"])
 @router.get("/", response_model=ActivityListResponse)
 async def list_activities(
     db: AsyncSession = Depends(get_db),
-    page: int = 1,
-    page_size: int = 20
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=200),
+    activity_type: str | None = Query(None, alias="type")
 ):
     offset = (page - 1) * page_size
     
+    # Base query
+    base_q = select(Activity)
+    if activity_type:
+        base_q = base_q.where(Activity.activity_type == activity_type)
+
     # Get total count
-    count_query = select(Activity)
-    result = await db.execute(count_query)
+    result = await db.execute(base_q)
     total = len(result.scalars().all())
     
     # Get activities
-    query = select(Activity).offset(offset).limit(page_size).order_by(Activity.start_time.desc())
+    query = base_q.order_by(Activity.start_time.desc()).offset(offset).limit(page_size)
     result = await db.execute(query)
     activities = result.scalars().all()
     
