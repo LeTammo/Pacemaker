@@ -6,6 +6,8 @@ interface ActivityTimelineProps {
     activities: Activity[];
 }
 
+// ── Formatters ────────────────────────────────────────────────────────────────
+
 function formatPace(secPerKm: number | null): string {
     if (!secPerKm) return '--:--';
     const mins = Math.floor(secPerKm / 60);
@@ -13,8 +15,21 @@ function formatPace(secPerKm: number | null): string {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
+/** Swimming: sec/km → sec/25m (÷ 40) */
+function formatSwimPace(secPerKm: number | null): string {
+    if (!secPerKm) return '--:--';
+    const secPer25m = secPerKm / 40;
+    const mins = Math.floor(secPer25m / 60);
+    const secs = Math.floor(secPer25m % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
 function formatDuration(seconds: number): string {
-    return new Date(seconds * 1000).toISOString().substr(11, 8).replace(/^00:/, '');
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    return `${m}:${String(s).padStart(2, '0')}`;
 }
 
 function formatDate(iso: string): { weekday: string; date: string } {
@@ -25,9 +40,47 @@ function formatDate(iso: string): { weekday: string; date: string } {
     };
 }
 
-export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({ activities }) => {
+// ── Sub-components ─────────────────────────────────────────────────────────────
+
+function MetricCell({
+    label,
+    value,
+    unit,
+    valueClass = 'text-white',
+}: {
+    label: string;
+    value: React.ReactNode;
+    unit?: string;
+    valueClass?: string;
+}) {
     return (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-0.5 min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 whitespace-nowrap">
+                {label}
+            </p>
+            <div className="flex items-baseline gap-1">
+                <span className={`text-lg font-bold tabular-nums leading-none ${valueClass}`}>
+                    {value}
+                </span>
+                {unit && <span className="text-[11px] text-zinc-500 whitespace-nowrap">{unit}</span>}
+            </div>
+        </div>
+    );
+}
+
+// ── Main Component ─────────────────────────────────────────────────────────────
+
+export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({ activities }) => {
+    if (!activities.length) {
+        return (
+            <div className="py-16 text-center text-zinc-600 text-sm">
+                No activities to display.
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-3">
             {activities.map((activity) => {
                 const at = (activity.activity_type || '').toLowerCase();
                 const isRun = at.includes('run');
@@ -37,134 +90,119 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({ activities }
                     ? (activity.distance_meters / 1000).toFixed(2)
                     : '0.00';
 
+                // Colors
+                const distColor = isRun
+                    ? 'text-[#60a5fa]'
+                    : isSwim
+                    ? 'text-[#22d3ee]'
+                    : 'text-white';
+
+                // Badge
+                const badgeClass = isRun
+                    ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/20'
+                    : isSwim
+                    ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/20'
+                    : 'bg-zinc-700/20 text-zinc-400 border border-zinc-700/30';
+
+                const badgeLabel = isRun
+                    ? 'Running'
+                    : isSwim
+                    ? 'Lap Swimming'
+                    : (activity.activity_type || '').replace(/_/g, ' ');
+
+                // Heart rate display
+                const hasHR = !!activity.average_heart_rate;
+                const hrDisplay = hasHR
+                    ? activity.max_heart_rate
+                        ? `${activity.average_heart_rate} / ${activity.max_heart_rate}`
+                        : `${activity.average_heart_rate}`
+                    : null;
+                const hrUnit = hasHR
+                    ? activity.max_heart_rate
+                        ? 'avg / max bpm'
+                        : 'avg bpm'
+                    : undefined;
+
                 return (
                     <div
                         key={activity.id}
-                        // Activity card: slate-800 (lighter than the slate-950 page bg)
-                        className="bg-zinc-800 border border-zinc-700/60 rounded-2xl overflow-hidden hover:border-zinc-600 transition-colors duration-200"
+                        className="bg-zinc-900 border border-zinc-800/80 rounded-2xl overflow-hidden hover:border-zinc-700 transition-colors duration-200"
                     >
-                        {/* Top bar: date + type */}
-                        <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-700/50">
-                            <div className="flex items-center gap-3">
-                                <span className="w-2.5 h-2.5 rounded-full flex-none bg-zinc-400" />
-                                <span className="text-sm font-semibold text-white">
-                                    {weekday}
-                                </span>
-                                <span className="text-sm text-zinc-300">{date}</span>
-                                <div>
-                                    {activity.name && (
-                                        <span className={`text-sm font-semibold ${
-                                            isRun ? 'text-indigo-500' : isSwim ? 'text-sky-500' : 'text-zinc-300'
-                                        }`}>
-                                            {activity.name}
-                                        </span>
-                                    )}
-                                </div>
+                        {/* Card header */}
+                        <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-800/60">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <span
+                                    className={`w-2 h-2 rounded-full flex-none ${
+                                        isRun ? 'bg-[#60a5fa]' : isSwim ? 'bg-[#22d3ee]' : 'bg-zinc-500'
+                                    }`}
+                                />
+                                <span className="text-sm font-semibold text-white">{weekday}</span>
+                                <span className="text-sm text-zinc-400">{date}</span>
+                                {activity.name && (
+                                    <span className="text-sm text-zinc-500 truncate hidden sm:block">
+                                        · {activity.name}
+                                    </span>
+                                )}
                             </div>
                             <span
-                                className={`text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider ${
-                                    isRun
-                                        ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
-                                        : isSwim ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20'
-                                        : 'bg-zinc-700/10 text-zinc-300 border border-zinc-700/20'
-                                }`}
+                                className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider flex-none ${badgeClass}`}
                             >
-                                {(activity.activity_type || '').replace('_', ' ')}
+                                {badgeLabel}
                             </span>
                         </div>
 
-                        <div className="p-4">
-                            {/* Stats in one horizontal line + splits on right */}
-                            <div className="flex items-center justify-between gap-1">
-
-                                {/* Left: Stats inline */}
-                                <div className="flex items-baseline gap-3">
+                        {/* Card body */}
+                        <div className="px-5 py-4">
+                            <div className="flex items-start justify-between gap-4">
+                                {/* Metrics row */}
+                                <div className="flex items-start gap-6 flex-wrap">
                                     {/* Distance */}
-                                    <div>
-                                        <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
-                                            Distance
-                                        </p>
-                                        <div className="flex items-baseline gap-1">
-                                        <span className={`text-2xl font-black tabular-nums ${
-                                            isRun ? 'text-indigo-500' : isSwim ? 'text-sky-500' : 'text-white'
-                                        }`}>
-                                            {distKm}
-                                        </span>
-                                            <span className="text-xs text-zinc-400">km</span>
-                                        </div>
-                                    </div>
+                                    <MetricCell
+                                        label="Distance"
+                                        value={distKm}
+                                        unit="km"
+                                        valueClass={`text-2xl font-black ${distColor}`}
+                                    />
 
-                                    <div>
-                                        <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
-                                            Duration
-                                        </p>
-                                        <div className="flex items-baseline gap-1">
-                                            <span className="text-lg font-bold text-white tabular-nums">
-                                                {activity.duration_seconds
-                                                    ? formatDuration(activity.duration_seconds)
-                                                    : '0:00'}
-                                            </span>
-                                            <span className="text-xs text-zinc-400">min</span>
-                                        </div>
-                                    </div>
+                                    {/* Duration */}
+                                    <MetricCell
+                                        label="Duration"
+                                        value={activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00'}
+                                        unit="min"
+                                    />
 
-                                    {/* Avg Pace */}
-                                    <div>
-                                        <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
-                                            Avg Pace
-                                        </p>
-                                        <div className="flex items-baseline gap-1">
-                                        <span className="text-lg font-bold text-white tabular-nums">
-                                            {formatPace(activity.average_pace_seconds)}
-                                        </span>
-                                            <span className="text-xs text-zinc-400"> min</span>
-                                        </div>
-                                    </div>
+                                    {/* Pace */}
+                                    {isSwim ? (
+                                        <MetricCell
+                                            label="Avg Pace"
+                                            value={formatSwimPace(activity.average_pace_seconds)}
+                                            unit="/25m"
+                                        />
+                                    ) : (
+                                        <MetricCell
+                                            label="Avg Pace"
+                                            value={formatPace(activity.average_pace_seconds)}
+                                            unit="min/km"
+                                        />
+                                    )}
 
-                                    {/* Avg HR */}
-                                    {activity.average_heart_rate && (
-                                        <div>
-                                            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
-                                                Avg HR
-                                            </p>
-                                            <div className="flex items-baseline gap-1">
-                                            <span className="text-lg font-bold text-white tabular-nums">
-                                                {activity.average_heart_rate}
-                                            </span>
-                                                <span className="text-xs text-zinc-400">bpm</span>
-                                            </div>
-                                        </div>
+                                    {/* Heart Rate */}
+                                    {hrDisplay && (
+                                        <MetricCell
+                                            label="Heart Rate"
+                                            value={hrDisplay}
+                                            unit={hrUnit}
+                                        />
                                     )}
                                 </div>
 
-                                {/* Spacer */}
-                                <div className="flex-1" />
-
-                                {/* Splits */}
-                                {activity.splits && activity.splits.length > 0 && (
-                                    <div>
+                                {/* Splits (runs only) */}
+                                {isRun && activity.splits && activity.splits.length > 0 && (
+                                    <div className="flex-none">
                                         <SplitVisualizer splits={activity.splits} />
                                     </div>
                                 )}
                             </div>
-
-                            {/* Swim extras */}
-                            {isSwim && (
-                                <div className="flex gap-6 mb-4">
-                                    <div>
-                                        <p className="text-xs text-zinc-300 mb-0.5">Lengths</p>
-                                        <p className="text-sm font-semibold text-zinc-200">{activity.active_lengths ?? '--'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-zinc-300 mb-0.5">Strokes</p>
-                                        <p className="text-sm font-semibold text-zinc-200">{activity.strokes ?? '--'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-zinc-300 mb-0.5">Avg strokes / length</p>
-                                        <p className="text-sm font-semibold text-zinc-200">{activity.average_strokes ?? '--'}</p>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     </div>
                 );

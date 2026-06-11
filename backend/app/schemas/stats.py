@@ -33,6 +33,22 @@ class ActivityStats(BaseModel):
     average_runs_per_week: float
     average_swims_per_week: float
 
+    # Monthly per-sport counts (current vs previous calendar month)
+    runs_this_month: int = 0
+    runs_last_month: int = 0
+    swims_this_month: int = 0
+    swims_last_month: int = 0
+
+    # Weekly per-sport averages (this week vs last week)
+    avg_run_distance_this_week_km: float | None = None
+    avg_run_distance_last_week_km: float | None = None
+    avg_swim_distance_this_week_km: float | None = None
+    avg_swim_distance_last_week_km: float | None = None
+    avg_run_pace_this_week_seconds: float | None = None
+    avg_run_pace_last_week_seconds: float | None = None
+    avg_swim_pace_this_week_seconds: float | None = None
+    avg_swim_pace_last_week_seconds: float | None = None
+
 
 class RunningStats(BaseModel):
     total_runs: int

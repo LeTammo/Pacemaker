@@ -5,13 +5,45 @@ import { getStats } from '@/lib/stats';
 import { ActivityTimeline } from '@/components/ui/ActivityTimeline';
 import api from '@/lib/api';
 
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+function KpiCard({
+    label,
+    value,
+    sub,
+    accent,
+}: {
+    label: string;
+    value: React.ReactNode;
+    sub?: string;
+    accent?: string;
+}) {
+    return (
+        <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-1.5">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{label}</p>
+            <p className={`text-3xl font-black tabular-nums leading-none ${accent ?? 'text-white'}`}>
+                {value}
+            </p>
+            {sub && <p className="text-xs text-zinc-500 mt-0.5">{sub}</p>}
+        </div>
+    );
+}
+
+function getMonthName(offset: 0 | -1): string {
+    const d = new Date();
+    d.setMonth(d.getMonth() + offset);
+    return d.toLocaleDateString(undefined, { month: 'long' });
+}
+
+// ── Page ───────────────────────────────────────────────────────────────────────
+
 export default function DashboardPage() {
     const { data: activityData, isLoading, refetch } = useQuery({
         queryKey: ['activities'],
         queryFn: () => getActivities(1, 10),
     });
 
-    const { data: statsData } = useQuery({
+    const { data: stats } = useQuery({
         queryKey: ['stats'],
         queryFn: getStats,
     });
@@ -26,65 +58,64 @@ export default function DashboardPage() {
         }
     };
 
+    const thisMonth = getMonthName(0);
+    const lastMonth = getMonthName(-1);
+
     return (
         <main className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 w-full">
-            {/* Title Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800 pb-6">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800/60 pb-6">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-white tracking-tight">All Activities</h1>
+                    <h1 className="text-2xl font-bold text-white tracking-tight">Dashboard</h1>
+                    <p className="text-sm text-zinc-500 mt-0.5">Overview of your training</p>
                 </div>
                 <button
                     onClick={triggerSync}
-                    className="bg-zinc-700 hover:bg-zinc-600 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-all shadow-lg shadow-zinc-800/30 active:scale-95"
+                    className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold px-4 py-2.5 rounded-xl text-sm transition-all active:scale-95 border border-zinc-700/60"
                 >
-                    🔄 Synchronize Garmin
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 2v6h-6" /><path d="M3 12a9 9 0 0115-6.7L21 8" />
+                        <path d="M3 22v-6h6" /><path d="M21 12a9 9 0 01-15 6.7L3 16" />
+                    </svg>
+                    Sync Garmin
                 </button>
             </div>
 
-            {/* Dynamic Performance KPI Widgets */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl">
-                    <p className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Avg Session Distance</p>
-                    <p className="text-3xl font-black text-zinc-100 mt-2">
-                        {statsData?.average_activity_distance_km ? statsData.average_activity_distance_km.toFixed(1) : 0} <span className="text-xs text-zinc-300">km</span>
-                    </p>
-                    <p className="text-xs text-zinc-300 mt-1">All activities</p>
-                </div>
-
-                <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl">
-                    <p className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Avg Run Pace</p>
-                    <p className="text-3xl font-black text-zinc-100 mt-2">
-                        {statsData?.average_run_pace_seconds ? `${Math.floor(statsData.average_run_pace_seconds / 60)}:${String(Math.floor(statsData.average_run_pace_seconds % 60)).padStart(2, '0')}` : '--:--'} <span className="text-xs text-zinc-300"> min/km</span>
-                    </p>
-                    <p className="text-xs text-zinc-300 mt-1">Across all runs</p>
-                </div>
-
-                <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl">
-                    <p className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Avg Session Time</p>
-                    <p className="text-3xl font-black text-zinc-100 mt-2">
-                        {statsData?.average_activity_duration_minutes ? statsData.average_activity_duration_minutes.toFixed(0) : 0} <span className="text-xs text-zinc-300">min</span>
-                    </p>
-                    <p className="text-xs text-zinc-300 mt-1">Across all activities</p>
-                </div>
-
-                <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl">
-                    <p className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Weekly Avg</p>
-                    <p className="text-3xl font-black text-zinc-100 mt-2">
-                        {statsData?.average_activities_per_week ? statsData.average_activities_per_week.toFixed(1) : 0}
-                    </p>
-                    <p className="text-xs text-zinc-300 mt-1">Activities per week</p>
-                </div>
+            {/* KPI Grid — 4 cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <KpiCard
+                    label={`Runs · ${thisMonth}`}
+                    value={stats?.runs_this_month ?? 0}
+                    sub="This calendar month"
+                    accent="text-[#60a5fa]"
+                />
+                <KpiCard
+                    label={`Swims · ${thisMonth}`}
+                    value={stats?.swims_this_month ?? 0}
+                    sub="This calendar month"
+                    accent="text-[#22d3ee]"
+                />
+                <KpiCard
+                    label={`Runs · ${lastMonth}`}
+                    value={stats?.runs_last_month ?? 0}
+                    sub="Last calendar month"
+                    accent="text-zinc-300"
+                />
+                <KpiCard
+                    label={`Swims · ${lastMonth}`}
+                    value={stats?.swims_last_month ?? 0}
+                    sub="Last calendar month"
+                    accent="text-zinc-300"
+                />
             </div>
 
-            {/* Main Grid: Timeline View */}
-            <div className="grid grid-cols-1 gap-8">
-                <div>
-                    {isLoading ? (
-                        <div className="text-zinc-300 text-sm">Querying data...</div>
-                    ) : (
-                        <ActivityTimeline activities={activityData?.activities || []} />
-                    )}
-                </div>
+            {/* Activity timeline */}
+            <div>
+                {isLoading ? (
+                    <div className="py-12 text-center text-zinc-500 text-sm">Querying data…</div>
+                ) : (
+                    <ActivityTimeline activities={activityData?.activities || []} />
+                )}
             </div>
         </main>
     );
