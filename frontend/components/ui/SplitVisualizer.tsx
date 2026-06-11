@@ -30,6 +30,14 @@ function formatSplitDistance(meters: number): string {
     return Math.round(meters) + ' m';
 }
 
+function getPaceHighlightTier(pace: number | null): 0 | 1 | 2 | 3 {
+    if (pace === null) return 0;
+    if (pace < 330) return 3;
+    if (pace < 360) return 2;
+    if (pace < 375) return 1;
+    return 0;
+}
+
 export const SplitVisualizer = ({ splits }: { splits: GarminSplit[] | null }) => {
     if (!splits || splits.length === 0) {
         return null;
@@ -41,24 +49,25 @@ export const SplitVisualizer = ({ splits }: { splits: GarminSplit[] | null }) =>
         return aCum - bCum;
     });
 
-    const paces = orderedSplits.map(getSplitPaceSeconds).filter((p): p is number => p !== null);
-    const minPace = paces.length > 0 ? Math.min(...paces) : null;
-
     return (
         <div className="flex gap-2 overflow-x-auto pb-0.5">
             {orderedSplits.map((split, idx) => {
                 const pace = getSplitPaceSeconds(split);
                 const dist = getSplitDistance(split);
-                const isBest = pace !== null && minPace !== null && pace === minPace;
+                const paceTier = getPaceHighlightTier(pace);
 
                 return (
                     <div
                         key={idx}
                         className={`
                             flex-none w-26 rounded-xl p-3 border transition-colors bg-zinc-800/50 border-zinc-700/40
-                            ${isBest
+                            ${paceTier === 1
                                 ? 'shadow shadow-emerald-500/35 hover:bg-emerald-500/20 border-emerald-500/50'
-                                : 'hover:bg-zinc-700/50'
+                                : paceTier === 2
+                                    ? 'shadow-md shadow-emerald-400/40 hover:bg-emerald-500/25 border-emerald-400/60 ring-1 ring-emerald-400/20'
+                                    : paceTier === 3
+                                        ? 'shadow-lg shadow-emerald-300/45 hover:bg-emerald-400/30 border-emerald-300/70 ring-1 ring-emerald-300/30 bg-emerald-500/10'
+                                        : 'hover:bg-zinc-700/50'
                             }
                         `}
                     >
@@ -71,7 +80,17 @@ export const SplitVisualizer = ({ splits }: { splits: GarminSplit[] | null }) =>
 
                         {/* Pace */}
                         <div className="flex items-baseline gap-0.5">
-                            <p className={`text-lg font-black leading-none tabular-nums ${isBest ? 'text-emerald-300' : 'text-white'}`}>
+                            <p
+                                className={`text-lg font-black leading-none tabular-nums ${
+                                    paceTier === 1
+                                        ? 'text-emerald-300'
+                                        : paceTier === 2
+                                            ? 'text-emerald-200'
+                                            : paceTier === 3
+                                                ? 'text-emerald-100'
+                                                : 'text-gray-300'
+                                }`}
+                            >
                                 {formatPaceFromSeconds(pace)}
                             </p>
                         </div>
