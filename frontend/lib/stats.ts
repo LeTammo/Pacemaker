@@ -5,3 +5,9 @@ export const getStats = async (): Promise<any> => {
   const { data } = await api.get('/stats/');
   return data;
 };
+
+export const getActivityStats = async (activityType: string): Promise<any> => {
+  const { data } = await api.get(`/stats/activity/${activityType}`);
+  return data;
+};
+

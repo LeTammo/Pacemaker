@@ -18,10 +18,8 @@ function formatPace(secPerKm: number | null): string {
 /** Swimming: sec/km → sec/25m (÷ 40) */
 function formatSwimPace(secPerKm: number | null): string {
     if (!secPerKm) return '--:--';
-    const secPer25m = secPerKm / 40;
-    const mins = Math.floor(secPer25m / 60);
-    const secs = Math.floor(secPer25m % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    const s = secPerKm / 40;
+    return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 }
 
 function formatDuration(seconds: number): string {
@@ -40,18 +38,22 @@ function formatDate(iso: string): { weekday: string; date: string } {
     };
 }
 
-// ── Sub-components ─────────────────────────────────────────────────────────────
+function activityBadgeLabel(type: string): string {
+    return type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+// ── MetricCell ────────────────────────────────────────────────────────────────
 
 function MetricCell({
     label,
     value,
     unit,
-    valueClass = 'text-white',
+    large = false,
 }: {
     label: string;
     value: React.ReactNode;
     unit?: string;
-    valueClass?: string;
+    large?: boolean;
 }) {
     return (
         <div className="flex flex-col gap-0.5 min-w-0">
@@ -59,7 +61,7 @@ function MetricCell({
                 {label}
             </p>
             <div className="flex items-baseline gap-1">
-                <span className={`text-lg font-bold tabular-nums leading-none ${valueClass}`}>
+                <span className={`tabular-nums leading-none font-bold ${large ? 'text-2xl font-black text-indigo-300' : 'text-lg text-white'}`}>
                     {value}
                 </span>
                 {unit && <span className="text-[11px] text-zinc-500 whitespace-nowrap">{unit}</span>}
@@ -85,57 +87,32 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({ activities }
                 const at = (activity.activity_type || '').toLowerCase();
                 const isRun = at.includes('run');
                 const isSwim = at.includes('swim');
+
                 const { weekday, date } = formatDate(activity.start_time);
                 const distKm = activity.distance_meters
                     ? (activity.distance_meters / 1000).toFixed(2)
                     : '0.00';
 
-                // Colors
-                const distColor = isRun
-                    ? 'text-[#60a5fa]'
-                    : isSwim
-                    ? 'text-[#22d3ee]'
-                    : 'text-white';
-
-                // Badge
-                const badgeClass = isRun
-                    ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/20'
-                    : isSwim
-                    ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/20'
-                    : 'bg-zinc-700/20 text-zinc-400 border border-zinc-700/30';
-
-                const badgeLabel = isRun
-                    ? 'Running'
-                    : isSwim
-                    ? 'Lap Swimming'
-                    : (activity.activity_type || '').replace(/_/g, ' ');
-
-                // Heart rate display
+                // Unified HR display
                 const hasHR = !!activity.average_heart_rate;
-                const hrDisplay = hasHR
+                const hrValue = hasHR
                     ? activity.max_heart_rate
                         ? `${activity.average_heart_rate} / ${activity.max_heart_rate}`
                         : `${activity.average_heart_rate}`
                     : null;
                 const hrUnit = hasHR
-                    ? activity.max_heart_rate
-                        ? 'avg / max bpm'
-                        : 'avg bpm'
+                    ? activity.max_heart_rate ? 'avg / max bpm' : 'avg bpm'
                     : undefined;
 
                 return (
                     <div
                         key={activity.id}
-                        className="bg-zinc-900 border border-zinc-800/80 rounded-2xl overflow-hidden hover:border-zinc-700 transition-colors duration-200"
+                        className="bg-zinc-900 border border-zinc-800/80 rounded-2xl overflow-hidden hover:border-zinc-700/80 hover:bg-zinc-900/80 transition-all duration-200"
                     >
                         {/* Card header */}
                         <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-800/60">
                             <div className="flex items-center gap-3 min-w-0">
-                                <span
-                                    className={`w-2 h-2 rounded-full flex-none ${
-                                        isRun ? 'bg-[#60a5fa]' : isSwim ? 'bg-[#22d3ee]' : 'bg-zinc-500'
-                                    }`}
-                                />
+                                <span className="w-2 h-2 rounded-full flex-none bg-indigo-400" />
                                 <span className="text-sm font-semibold text-white">{weekday}</span>
                                 <span className="text-sm text-zinc-400">{date}</span>
                                 {activity.name && (
@@ -144,59 +121,49 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({ activities }
                                     </span>
                                 )}
                             </div>
-                            <span
-                                className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider flex-none ${badgeClass}`}
-                            >
-                                {badgeLabel}
+                            <span className="text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider flex-none bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                                {activityBadgeLabel(activity.activity_type || '')}
                             </span>
                         </div>
 
                         {/* Card body */}
                         <div className="px-5 py-4">
                             <div className="flex items-start justify-between gap-4">
-                                {/* Metrics row */}
-                                <div className="flex items-start gap-6 flex-wrap">
-                                    {/* Distance */}
-                                    <MetricCell
-                                        label="Distance"
-                                        value={distKm}
-                                        unit="km"
-                                        valueClass={`text-2xl font-black ${distColor}`}
-                                    />
 
-                                    {/* Duration */}
+                                {/* Metrics */}
+                                <div className="flex items-start gap-6 flex-wrap">
+                                    {/* Distance — always shown, large indigo */}
+                                    <MetricCell label="Distance" value={distKm} unit="km" large />
+
+                                    {/* Duration — always shown */}
                                     <MetricCell
                                         label="Duration"
                                         value={activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00'}
-                                        unit="min"
                                     />
 
-                                    {/* Pace */}
-                                    {isSwim ? (
-                                        <MetricCell
-                                            label="Avg Pace"
-                                            value={formatSwimPace(activity.average_pace_seconds)}
-                                            unit="/25m"
-                                        />
-                                    ) : (
+                                    {/* Pace — running: min/km | swimming: /25m | others: omitted */}
+                                    {isRun && (
                                         <MetricCell
                                             label="Avg Pace"
                                             value={formatPace(activity.average_pace_seconds)}
                                             unit="min/km"
                                         />
                                     )}
-
-                                    {/* Heart Rate */}
-                                    {hrDisplay && (
+                                    {isSwim && (
                                         <MetricCell
-                                            label="Heart Rate"
-                                            value={hrDisplay}
-                                            unit={hrUnit}
+                                            label="Avg Pace"
+                                            value={formatSwimPace(activity.average_pace_seconds)}
+                                            unit="/25m"
                                         />
+                                    )}
+
+                                    {/* Heart Rate — all activities */}
+                                    {hrValue && (
+                                        <MetricCell label="Heart Rate" value={hrValue} unit={hrUnit} />
                                     )}
                                 </div>
 
-                                {/* Splits (runs only) */}
+                                {/* Splits — running only */}
                                 {isRun && activity.splits && activity.splits.length > 0 && (
                                     <div className="flex-none">
                                         <SplitVisualizer splits={activity.splits} />

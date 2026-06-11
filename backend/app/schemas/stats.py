@@ -26,7 +26,9 @@ class ActivityStats(BaseModel):
     average_run_distance_km: float | None
     average_swim_distance_km: float | None
     activities_this_week: int
+    activities_last_week: int = 0
     activities_this_month: int
+    activities_last_month: int = 0
     average_activities_per_week: float
     average_distance_per_week_km: float
     total_duration_hours: float
@@ -166,3 +168,14 @@ class CalendarDay(BaseModel):
 class CalendarResponse(BaseModel):
     days: list[CalendarDay]
     year: int
+
+
+class SportStatsResponse(BaseModel):
+    activity_type: str
+    total_activities: int
+    average_distance_km: float | None
+    avg_distance_this_week_km: float | None
+    avg_distance_last_week_km: float | None
+    avg_pace_this_week_seconds: float | None
+    avg_pace_last_week_seconds: float | None
+

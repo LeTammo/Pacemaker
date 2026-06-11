@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.db.database import get_db
 from app.models.activity import Activity
-from app.schemas.stats import StatsResponse, ActivityStats
+from app.schemas.stats import StatsResponse, ActivityStats, SportStatsResponse
 from datetime import date, datetime, timedelta
 
 router = APIRouter(prefix="/stats", tags=["stats"])
@@ -88,11 +88,19 @@ async def get_stats(db: AsyncSession = Depends(get_db)):
     week_q = select(func.count(Activity.id)).where(
         Activity.start_time >= this_week_start, Activity.start_time < this_week_end
     )
+    last_week_q = select(func.count(Activity.id)).where(
+        Activity.start_time >= last_week_start, Activity.start_time < last_week_end
+    )
     month_q = select(func.count(Activity.id)).where(
         Activity.start_time >= this_month_start, Activity.start_time < this_month_end
     )
+    last_month_all_q = select(func.count(Activity.id)).where(
+        Activity.start_time >= last_month_start, Activity.start_time < last_month_end
+    )
     activities_this_week = (await db.execute(week_q)).scalar_one() or 0
+    activities_last_week = (await db.execute(last_week_q)).scalar_one() or 0
     activities_this_month = (await db.execute(month_q)).scalar_one() or 0
+    activities_last_month = (await db.execute(last_month_all_q)).scalar_one() or 0
 
     # ── Monthly per-sport counts ───────────────────────────────────────────────
     async def count_type_in_range(activity_type_filter, start: datetime, end: datetime) -> int:
@@ -160,7 +168,9 @@ async def get_stats(db: AsyncSession = Depends(get_db)):
         average_run_distance_km=avg_run_distance_km,
         average_swim_distance_km=avg_swim_distance_km,
         activities_this_week=activities_this_week,
+        activities_last_week=activities_last_week,
         activities_this_month=activities_this_month,
+        activities_last_month=activities_last_month,
         average_activities_per_week=round(avg_per_week, 2),
         average_distance_per_week_km=round(avg_distance_per_week_km, 2),
         total_duration_hours=round((total_duration or 0) / 3600.0, 2),
@@ -181,3 +191,50 @@ async def get_stats(db: AsyncSession = Depends(get_db)):
         avg_swim_pace_this_week_seconds=avg_swim_pace_this_week,
         avg_swim_pace_last_week_seconds=avg_swim_pace_last_week,
     )
+
+
+@router.get("/activity/{activity_type}", response_model=SportStatsResponse)
+async def get_activity_stats(activity_type: str, db: AsyncSession = Depends(get_db)):
+    today = date.today()
+
+    this_week_start, this_week_end = _week_bounds(today)
+    last_week_start = this_week_start - timedelta(days=7)
+    last_week_end = this_week_start
+
+    if activity_type in SWIM_TYPES:
+        cond = Activity.activity_type.in_(SWIM_TYPES)
+    else:
+        cond = Activity.activity_type == activity_type
+
+    # Total and Average distance
+    total_q = select(
+        func.count(Activity.id),
+        func.coalesce(func.avg(Activity.distance_meters), 0),
+    ).where(cond)
+    res = await db.execute(total_q)
+    total_count, avg_dist = res.one()
+
+    # Weekly distance & pace averages
+    async def avg_distance_pace_in_range(start: datetime, end: datetime):
+        q = select(
+            func.avg(Activity.distance_meters),
+            func.avg(Activity.average_pace_seconds),
+        ).where(cond, Activity.start_time >= start, Activity.start_time < end)
+        row = (await db.execute(q)).one()
+        avg_d = round(row[0] / 1000.0, 2) if row[0] else None
+        avg_p = round(row[1], 2) if row[1] else None
+        return avg_d, avg_p
+
+    avg_dist_this_week, avg_pace_this_week = await avg_distance_pace_in_range(this_week_start, this_week_end)
+    avg_dist_last_week, avg_pace_last_week = await avg_distance_pace_in_range(last_week_start, last_week_end)
+
+    return SportStatsResponse(
+        activity_type=activity_type,
+        total_activities=total_count,
+        average_distance_km=round((avg_dist or 0) / 1000.0, 2) if total_count else None,
+        avg_distance_this_week_km=avg_dist_this_week,
+        avg_distance_last_week_km=avg_dist_last_week,
+        avg_pace_this_week_seconds=avg_pace_this_week,
+        avg_pace_last_week_seconds=avg_pace_last_week,
+    )
+

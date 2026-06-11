@@ -1,11 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, distinct
 from app.db.database import get_db
 from app.models.activity import Activity
 from app.schemas.activity import ActivityListResponse, ActivityResponse
 
 router = APIRouter(prefix="/activities", tags=["activities"])
+
+
+@router.get("/types", response_model=list[str])
+async def list_activity_types(db: AsyncSession = Depends(get_db)):
+    """Return all distinct activity_type values present in the database."""
+    result = await db.execute(select(distinct(Activity.activity_type)).order_by(Activity.activity_type))
+    return [row[0] for row in result.fetchall() if row[0]]
 
 @router.get("/", response_model=ActivityListResponse)
 async def list_activities(
