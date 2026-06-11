@@ -60,4 +60,11 @@ async def root():
 if __name__ == "__main__":
     import uvicorn
     # Run the FastAPI app instance directly to avoid import loops when using "module:app"
-    uvicorn.run(app, host=settings.api_host, port=settings.api_port, reload=settings.debug)
+    uvicorn.run(
+        app,
+        host=settings.api_host,
+        port=settings.api_port,
+        reload=settings.debug,
+        proxy_headers=True,
+        forwarded_allow_ips="*",
+    )

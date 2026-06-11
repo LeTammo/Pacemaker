@@ -133,7 +133,7 @@ function SyncFooterAction() {
 
         setIsSyncing(true);
         try {
-            await api.post('/sync', {}, { headers: { 'X-Sync-Pin': pin } });
+            await api.post('/sync/', {}, { headers: { 'X-Sync-Pin': pin } });
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: ['activities'] }),
                 queryClient.invalidateQueries({ queryKey: ['stats'] }),
