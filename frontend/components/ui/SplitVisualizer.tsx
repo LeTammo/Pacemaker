@@ -53,13 +53,9 @@ export const SplitVisualizer = ({ splits }: { splits: GarminSplit[] | null }) =>
     };
 
     return (
-        <div className="rounded-xl bg-slate-800/40 p-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">
-                Splits — {orderedSplits.length} segments
-            </p>
-
+        <div className="rounded-xl bg-zinc-800/40">
             {/* Split cards */}
-            <div className="flex overflow-x-auto pb-1 gap-2 scrollbar-thin scrollbar-thumb-slate-700">
+            <div className="flex overflow-x-auto pb-1 gap-2 scrollbar-thin scrollbar-thumb-zinc-700">
                 {orderedSplits.map((split, idx) => {
                     const pace = getSplitPaceSeconds(split);
                     const dist = getSplitDistance(split);
@@ -69,36 +65,31 @@ export const SplitVisualizer = ({ splits }: { splits: GarminSplit[] | null }) =>
                     return (
                         <div
                             key={idx}
-                            className={`flex-none w-32 rounded-lg p-3 border transition-colors bg-zinc-900/60 border-zinc-900/40`}
+                            className={`flex-none w-28 rounded-lg p-3 border transition-colors bg-zinc-900/60 border-zinc-900/40`}
                         >
                             {/* Header row */}
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                            <div className="flex items-center justify-between gap-2 mb-2">
+                                <span className="text-xs font-bold uppercase tracking-wider text-zinc-300">
                                     S{idx + 1}
                                 </span>
                                 {isFastest && (
-                                    <span className="text-xs font-bold uppercase tracking-wider text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded-full">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/30 rounded-full">
                                         best
-                                    </span>
-                                )}
-                                {type === 'walk' && !isFastest && (
-                                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">
-                                        walk
                                     </span>
                                 )}
                             </div>
 
                             {/* Pace — headline */}
-                            <p className={`text-xl font-black leading-none tabular-nums ${
-                                isFastest ? 'text-blue-400' : 'text-white'
-                            }`}>
-                                {formatPaceFromSeconds(pace)}
-                            </p>
-                            <p className="text-xs text-slate-500 mt-0.5">/km</p>
+                            <div className="flex items-baseline gap-1">
+                                <p className="text-xl font-black leading-none tabular-nums text-white">
+                                    {formatPaceFromSeconds(pace)}
+                                </p>
+                                <p className="text-xs text-zinc-300 mt-0.5"> min</p>
+                            </div>
 
                             {/* Distance */}
                             {dist !== null && (
-                                <p className="text-xs text-slate-400 mt-2 font-medium">
+                                <p className="text-xs text-zinc-300 mt-2 font-medium">
                                     {formatSplitDistance(dist)}
                                 </p>
                             )}
