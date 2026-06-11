@@ -17,12 +17,14 @@ This project is designed to run with `docker-compose` and a reverse proxy such a
 Copy `.env.example` to `.env` and set:
 
 - `GARMIN_EMAIL` and `GARMIN_PASSWORD`: your Garmin Connect credentials.
+- `SYNC_PIN`: a private pin used to authorize manual syncs from the UI.
 - `NEXT_PUBLIC_API_URL`: the public URL the browser should call for the API.
   - Local development: `http://localhost:8000/api`
   - Hosted with domain: `https://your-domain.com/api`
 - `ENABLE_AUTO_SYNC`: set to `true` if you want background syncs.
 - `FRONTEND_PORT` and `BACKEND_PORT`: host ports to publish.
 - `API_HOST` and `API_PORT`: backend bind address and internal port. The defaults are fine for Docker.
+- `DATABASE_URL` and other backend-only settings can stay in `backend/.env` if you want, but the root `.env` is enough for Docker.
 
 ### What to expose
 

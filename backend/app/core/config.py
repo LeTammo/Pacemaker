@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     garmin_email: str = Field(..., env="GARMIN_EMAIL")
     garmin_password: str = Field(..., env="GARMIN_PASSWORD")
     garmin_token_store: str = "./data/garmin_tokens"
+    sync_pin: str = Field(..., env="SYNC_PIN")
 
     # Sync
     sync_interval_hours: int = 4

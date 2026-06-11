@@ -1,7 +1,10 @@
 'use client';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
+import api from '@/lib/api';
 import './globals.css';
 
 const queryClient = new QueryClient();
@@ -106,10 +109,7 @@ function NavigationSidebar({ children }: { children: React.ReactNode }) {
 
                 {/* Footer */}
                 <div className="p-5 border-t border-zinc-800/70">
-                    <div className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-none" />
-                        <span className="text-xs text-zinc-500">Garmin connected</span>
-                    </div>
+                    <SyncFooterAction />
                 </div>
             </aside>
 
@@ -118,6 +118,50 @@ function NavigationSidebar({ children }: { children: React.ReactNode }) {
                 {children}
             </div>
         </div>
+    );
+}
+
+function SyncFooterAction() {
+    const queryClient = useQueryClient();
+    const [isSyncing, setIsSyncing] = useState(false);
+
+    const triggerSync = async () => {
+        const pin = window.prompt('Enter the Garmin sync pin');
+        if (!pin) {
+            return;
+        }
+
+        setIsSyncing(true);
+        try {
+            await api.post('/sync', {}, { headers: { 'X-Sync-Pin': pin } });
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ['activities'] }),
+                queryClient.invalidateQueries({ queryKey: ['stats'] }),
+            ]);
+            alert('Sync started.');
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                alert(error.response?.data?.detail ?? 'Failed to trigger sync.');
+                return;
+            }
+            alert('Failed to trigger sync.');
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
+    return (
+        <button
+            onClick={triggerSync}
+            disabled={isSyncing}
+            className="w-full flex items-center justify-between gap-3 rounded-xl border border-zinc-700/60 bg-zinc-800/70 px-3 py-2.5 text-left text-sm font-semibold text-white transition-all hover:bg-zinc-700/70 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+            <span className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-none" />
+                {isSyncing ? 'Syncing…' : 'Sync Garmin'}
+            </span>
+            <span className="text-[10px] uppercase tracking-wider text-zinc-400">Pin required</span>
+        </button>
     );
 }
 
