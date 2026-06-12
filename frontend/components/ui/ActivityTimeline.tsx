@@ -1,6 +1,19 @@
 import React from 'react';
 import { Activity } from '@/types/activity';
 import { SplitVisualizer } from './SplitVisualizer';
+import {
+    IconRunning,
+    IconSwimming,
+    IconCycling,
+    IconActivity,
+    IconWalking,
+    IconPilates,
+    IconTreadmill,
+    IconCardio,
+    IconStrength,
+    IconSmile,
+    IconFrown, IconHiking, IconMeditation
+} from '@/components/ui/Icons';
 
 interface ActivityTimelineProps {
     activities: Activity[];
@@ -9,127 +22,29 @@ interface ActivityTimelineProps {
     activityType?: string;
 }
 
-// ── SVG Icons ──────────────────────────────────────────────────────────────────
-
-function IconRunning({ className }: { className?: string }) {
-    return (
-        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="14.5" cy="3.5" r="1.5" />
-            <path d="M9 8l2.5 2L14 7l3 3" />
-            <path d="M6.5 21L9 14l3 2 2-5 3 4" />
-            <path d="M9 14l-2.5 7" />
-        </svg>
-    );
-}
-
-function IconSwimming({ className }: { className?: string }) {
-    return (
-        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M2 18c1.4 0 2.5-.56 3.5-1.5S7.6 15 9 15s2.5.56 3.5 1.5S14.6 18 16 18s2.5-.56 3.5-1.5S21.6 15 23 15" />
-            <circle cx="15" cy="7" r="1.5" />
-            <path d="M10 11l2-4 2 2 2-3" />
-            <path d="M7 12l3-1" />
-        </svg>
-    );
-}
-
-function IconCycling({ className }: { className?: string }) {
-    return (
-        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="5.5" cy="17.5" r="3.5" />
-            <circle cx="18.5" cy="17.5" r="3.5" />
-            <path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11l-2-5 5-1.5-3.5-3 1.5-2" />
-            <path d="M5.5 17.5l3.5-5.5h7" />
-        </svg>
-    );
-}
-
-function IconActivity({ className }: { className?: string }) {
-    return (
-        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-        </svg>
-    );
-}
-
-function IconWalking({ className }: { className?: string }) {
-    return (
-        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="13" cy="4" r="1.5" />
-            <path d="M10 20v-6L7 10l3-4 3 3 2 4.5" />
-            <path d="M12 14l3 6" />
-        </svg>
-    );
-}
-
-function IconPilates({ className }: { className?: string }) {
-    return (
-        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="5" r="2" />
-            <path d="M5 20c3-3 7-3 10 0" />
-            <path d="M12 7v7l4 3" />
-            <path d="M12 10H8l-2 2" />
-        </svg>
-    );
-}
-
-function IconWalkpad({ className }: { className?: string }) {
-    return (
-        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 20h16M4 17h16M19 17l-3-6H8L5 17" />
-            <circle cx="12" cy="6" r="2" />
-        </svg>
-    );
-}
-
-function IconCardio({ className }: { className?: string }) {
-    return (
-        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-        </svg>
-    );
-}
-
-function IconStrength({ className }: { className?: string }) {
-    return (
-        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M6.5 6.5h11M6.5 17.5h11M4 5h5v3H4zm11 0h5v3h-5zM4 16h5v3H4zm11 0h5v3h-5zM2 11.5h20" />
-        </svg>
-    );
-}
-
-function IconSmile({ className }: { className?: string }) {
-    return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M8 14s1.5 2 4 2 4-2 4-2" />
-            <line x1="9" y1="9" x2="9.01" y2="9" />
-            <line x1="15" y1="9" x2="15.01" y2="9" />
-        </svg>
-    );
-}
-
-function IconFrown({ className }: { className?: string }) {
-    return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M16 16s-1.5-2-4-2-4 2-4 2" />
-            <line x1="9" y1="9" x2="9.01" y2="9" />
-            <line x1="15" y1="9" x2="15.01" y2="9" />
-        </svg>
-    );
-}
+// ── Activity type helpers ──────────────────────────────────────────────────────
 
 function ActivityIcon({ type, className }: { type: string; className?: string }) {
     const t = type.toLowerCase();
-    if (t.includes('run') && !t.includes('pad')) return <IconRunning className={className} />;
-    if (t.includes('swim')) return <IconSwimming className={className} />;
-    if (t.includes('cycl') || t.includes('bike') || t.includes('bik')) return <IconCycling className={className} />;
-    if (t.includes('walk') && !t.includes('pad')) return <IconWalking className={className} />;
-    if (t.includes('pilates')) return <IconPilates className={className} />;
-    if (t.includes('pad') || t.includes('treadmill')) return <IconWalkpad className={className} />;
-    if (t.includes('cardio') || t.includes('fitness')) return <IconCardio className={className} />;
-    if (t.includes('strength') || t.includes('weight') || t.includes('gym')) return <IconStrength className={className} />;
+    if (t.includes('running'))
+        return <IconRunning className={className} />;
+    if (t.includes('swimming'))
+        return <IconSwimming className={className} />;
+    if (t.includes('cycling'))
+        return <IconCycling className={className} />;
+    if (t.includes('walking'))
+        return <IconWalking className={className} />;
+    if (t.includes('pilates'))
+        return <IconMeditation className={className} />;
+    if (t.includes('pad') || t.includes('treadmill'))
+        return <IconTreadmill className={className} />;
+    if (t.includes('cardio') || t.includes('fitness'))
+        return <IconCardio className={className} />;
+    if (t.includes('strength') || t.includes('weight') || t.includes('gym'))
+        return <IconStrength className={className} />;
+    if (t.includes('hiking'))
+        return <IconHiking className={className} />;
+
     return <IconActivity className={className} />;
 }
 
