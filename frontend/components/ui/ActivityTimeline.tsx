@@ -2,17 +2,9 @@ import React from 'react';
 import { Activity } from '@/types/activity';
 import { SplitVisualizer } from './SplitVisualizer';
 import {
-    IconRunning,
-    IconSwimming,
-    IconCycling,
-    IconActivity,
-    IconWalking,
-    IconPilates,
-    IconTreadmill,
-    IconCardio,
-    IconStrength,
+    ActivityIcon,
     IconSmile,
-    IconFrown, IconHiking, IconMeditation
+    IconFrown
 } from '@/components/ui/Icons';
 
 interface ActivityTimelineProps {
@@ -23,30 +15,6 @@ interface ActivityTimelineProps {
 }
 
 // ── Activity type helpers ──────────────────────────────────────────────────────
-
-function ActivityIcon({ type, className }: { type: string; className?: string }) {
-    const t = type.toLowerCase();
-    if (t.includes('running'))
-        return <IconRunning className={className} />;
-    if (t.includes('swimming'))
-        return <IconSwimming className={className} />;
-    if (t.includes('cycling'))
-        return <IconCycling className={className} />;
-    if (t.includes('walking'))
-        return <IconWalking className={className} />;
-    if (t.includes('pilates'))
-        return <IconMeditation className={className} />;
-    if (t.includes('pad') || t.includes('treadmill'))
-        return <IconTreadmill className={className} />;
-    if (t.includes('cardio') || t.includes('fitness'))
-        return <IconCardio className={className} />;
-    if (t.includes('strength') || t.includes('weight') || t.includes('gym'))
-        return <IconStrength className={className} />;
-    if (t.includes('hiking'))
-        return <IconHiking className={className} />;
-
-    return <IconActivity className={className} />;
-}
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 

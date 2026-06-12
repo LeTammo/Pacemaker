@@ -424,36 +424,50 @@ class SyncService:
         logger.info("Activities synced", count=synced)
         return synced
 
-    async def sync_health_day(self, session: AsyncSession, target_date: date) -> bool:
+    async def sync_health_day(
+        self,
+        session: AsyncSession,
+        target_date: date,
+        sync_sleep: bool = True,
+        sync_health: bool = True
+    ) -> bool:
         """Fetch and upsert health data for a single day."""
         try:
-            raw = await garmin_service.get_daily_stats(target_date)
-            if raw:
-                data = transform_daily_health(raw, target_date)
-                existing = await session.scalar(
-                    select(DailyHealth).where(DailyHealth.calendar_date == target_date)
-                )
-                if existing:
-                    for k, v in data.items():
-                        setattr(existing, k, v)
-                else:
-                    session.add(DailyHealth(**data))
+            updated = False
+
+            if sync_health:
+                raw = await garmin_service.get_daily_stats(target_date)
+                if raw:
+                    data = transform_daily_health(raw, target_date)
+                    existing = await session.scalar(
+                        select(DailyHealth).where(DailyHealth.calendar_date == target_date)
+                    )
+                    if existing:
+                        for k, v in data.items():
+                            setattr(existing, k, v)
+                    else:
+                        session.add(DailyHealth(**data))
+                    updated = True
 
             # Sleep
-            sleep_raw = await garmin_service.get_sleep_data(target_date)
-            sleep_data = transform_sleep(sleep_raw, target_date)
-            if sleep_data:
-                existing_sleep = await session.scalar(
-                    select(SleepData).where(SleepData.calendar_date == target_date)
-                )
-                if existing_sleep:
-                    for k, v in sleep_data.items():
-                        setattr(existing_sleep, k, v)
-                else:
-                    session.add(SleepData(**sleep_data))
+            if sync_sleep:
+                sleep_raw = await garmin_service.get_sleep_data(target_date)
+                sleep_data = transform_sleep(sleep_raw, target_date)
+                if sleep_data:
+                    existing_sleep = await session.scalar(
+                        select(SleepData).where(SleepData.calendar_date == target_date)
+                    )
+                    if existing_sleep:
+                        for k, v in sleep_data.items():
+                            setattr(existing_sleep, k, v)
+                    else:
+                        session.add(SleepData(**sleep_data))
+                    updated = True
 
-            await session.commit()
-            return True
+            if updated:
+                await session.commit()
+                return True
+            return False
         except Exception as e:
             logger.warning("Failed to sync health day", date=str(target_date), error=str(e))
             await session.rollback()
@@ -521,19 +535,47 @@ class SyncService:
 
             return log
 
-    async def manual_sync(self) -> SyncLog:
+    async def manual_sync(
+        self,
+        days: int = 7,
+        sync_activities: bool = True,
+        sync_sleep: bool = True,
+        sync_health: bool = True
+    ) -> SyncLog:
         """Manual sync triggered by user."""
         async with AsyncSessionLocal() as session:
-            # Check if a full sync has ever run
-            last_full = await session.scalar(
-                select(SyncLog)
-                .where(SyncLog.sync_type == "full", SyncLog.status == "success")
-                .order_by(SyncLog.started_at.desc())
-            )
+            log = await self._create_sync_log(session, "manual")
+            logger.info("Starting manual sync", sync_id=log.id, days=days)
 
-        if last_full is None:
-            return await self.full_sync()
-        return await self.incremental_sync()
+            try:
+                end_date = date.today()
+                start_date = end_date - timedelta(days=days)
+
+                total_activities = 0
+                if sync_activities:
+                    total_activities = await self.sync_activities(session, start_date, end_date)
+
+                health_days = 0
+                if sync_sleep or sync_health:
+                    current = start_date
+                    while current <= end_date:
+                        if await self.sync_health_day(
+                            session, current, sync_sleep=sync_sleep, sync_health=sync_health
+                        ):
+                            health_days += 1
+                        current += timedelta(days=1)
+
+                await self._finish_sync_log(
+                    session, log, "success",
+                    activities_synced=total_activities,
+                    health_days_synced=health_days,
+                )
+                logger.info("Manual sync complete", activities=total_activities, health_days=health_days)
+            except Exception as e:
+                logger.error("Manual sync failed", error=str(e))
+                await self._finish_sync_log(session, log, "error", error=str(e))
+
+            return log
 
     async def get_status(self, session: AsyncSession) -> dict:
         """Get the latest sync status."""

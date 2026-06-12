@@ -9,19 +9,11 @@ import { getActivityTypes } from '@/lib/activities';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import {
     IconDashboard,
-    IconActivity,
     IconWatch,
-    IconRunning,
-    IconSwimming,
-    IconCycling,
-    IconWalking,
-    IconPilates,
-    IconStretching,
-    IconTreadmill,
-    IconCardio,
-    IconStrength,
-    IconMeditation,
-    IconHiking
+    IconLock,
+    IconMenu,
+    IconClose,
+    ActivityIcon
 } from '@/components/ui/Icons';
 import './globals.css';
 
@@ -34,35 +26,6 @@ function activityLabel(type: string): string {
     return type
         .replace(/_/g, ' ')
         .replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-/** Return the best SVG icon component for a given activity type */
-function ActivityIcon({ type, className }: { type: string; className?: string }) {
-    const t = type.toLowerCase();
-    if (t.includes('running'))
-        return <IconRunning className={className} />;
-    if (t.includes('swimming'))
-        return <IconSwimming className={className} />;
-    if (t.includes('cycling'))
-        return <IconCycling className={className} />;
-    if (t.includes('walk'))
-        return <IconWalking className={className} />;
-    if (t.includes('pilates'))
-        return <IconMeditation className={className} />;
-    if (t.includes('pad') || t.includes('treadmill'))
-        return <IconTreadmill className={className} />;
-    if (t.includes('cardio') || t.includes('fitness'))
-        return <IconCardio className={className} />;
-    if (t.includes('strength') || t.includes('weight') || t.includes('gym'))
-        return <IconStrength className={className} />;
-    if (t.includes('hiking'))
-        return <IconHiking className={className} />;
-    if (t.includes('stretching'))
-        return <IconStretching className={className} />;
-    if (t.includes('meditation'))
-        return <IconMeditation className={className} />;
-
-    return <IconActivity className={className} />;
 }
 
 // ── Navigation Sidebar ─────────────────────────────────────────────────────────
@@ -204,9 +167,7 @@ function NavigationSidebar({ children }: { children: React.ReactNode }) {
                                 className="p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-red-900/30 hover:bg-red-950/10 text-zinc-400 hover:text-red-400 transition-all duration-205 active:scale-95 flex-none cursor-pointer"
                                 title="Log Out / Lock Screen"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-4 h-4">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
-                                </svg>
+                                <IconLock className="w-4 h-4" />
                             </button>
                         </div>
                     )}
@@ -222,9 +183,7 @@ function NavigationSidebar({ children }: { children: React.ReactNode }) {
                         className="p-2 -ml-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors cursor-pointer"
                         title="Open menu"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-6 h-6">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                        </svg>
+                        <IconMenu className="w-6 h-6" />
                     </button>
                     <div className="flex items-center gap-2">
                         <IconWatch className="text-zinc-300 w-5 h-5 flex-none" />
@@ -251,9 +210,7 @@ function NavigationSidebar({ children }: { children: React.ReactNode }) {
                             onClick={() => setIsLoginModalOpen(false)}
                             className="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                            </svg>
+                            <IconClose className="w-5 h-5" />
                         </button>
 
                         <h2 className="text-base font-bold text-white mb-4 uppercase tracking-wide">Enter Dashboard Password</h2>
@@ -289,42 +246,173 @@ function NavigationSidebar({ children }: { children: React.ReactNode }) {
 function SyncFooterAction() {
     const qc = useQueryClient();
     const [isSyncing, setIsSyncing] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const triggerSync = async () => {
-        const pin = window.prompt('Enter the Garmin sync pin');
-        if (!pin) return;
+    // Form inputs
+    const [pin, setPin] = useState('');
+    const [days, setDays] = useState(7);
+    const [syncActivities, setSyncActivities] = useState(true);
+    const [syncSleep, setSyncSleep] = useState(true);
+    const [syncHealth, setSyncHealth] = useState(true);
+    const [error, setError] = useState('');
+
+    const handleSyncSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        
+        if (!pin) {
+            setError('Sync pin is required');
+            return;
+        }
 
         setIsSyncing(true);
         try {
-            await api.post('/sync/', {}, { headers: { 'X-Sync-Pin': pin } });
+            await api.post(
+                '/sync/',
+                {
+                    days,
+                    sync_activities: syncActivities,
+                    sync_sleep: syncSleep,
+                    sync_health: syncHealth,
+                },
+                { headers: { 'X-Sync-Pin': pin } }
+            );
             await Promise.all([
                 qc.invalidateQueries({ queryKey: ['activities'] }),
                 qc.invalidateQueries({ queryKey: ['activity-types'] }),
                 qc.invalidateQueries({ queryKey: ['stats'] }),
             ]);
-            alert('Sync started.');
-        } catch (error) {
-            if (axios.isAxiosError(error)) {
-                alert(error.response?.data?.detail ?? 'Failed to trigger sync.');
-                return;
+            setIsModalOpen(false);
+            setPin('');
+            alert('Sync triggered.');
+        } catch (err) {
+            if (axios.isAxiosError(err)) {
+                setError(err.response?.data?.detail ?? 'Failed to trigger sync.');
+            } else {
+                setError('Failed to trigger sync.');
             }
-            alert('Failed to trigger sync.');
         } finally {
             setIsSyncing(false);
         }
     };
 
     return (
-        <button
-            onClick={triggerSync}
-            disabled={isSyncing}
-            className="w-full flex items-center justify-between gap-3 rounded-xl border border-zinc-700/60 bg-zinc-800/70 px-3 py-2.5 text-left text-sm font-semibold text-white transition-all hover:bg-zinc-700/70 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
-        >
-            <span className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-none animate-pulse" />
-                {isSyncing ? 'Syncing…' : 'Sync'}
-            </span>
-        </button>
+        <>
+            <button
+                onClick={() => {
+                    setError('');
+                    setPin('');
+                    setIsModalOpen(true);
+                }}
+                disabled={isSyncing}
+                className="w-full flex items-center justify-between gap-3 rounded-xl border border-zinc-700/60 bg-zinc-800/70 px-3 py-2.5 text-left text-sm font-semibold text-white transition-all hover:bg-zinc-700/70 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+            >
+                <span className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-none animate-pulse" />
+                    {isSyncing ? 'Syncing…' : 'Sync'}
+                </span>
+            </button>
+
+            {/* Sync Config Modal */}
+            {isModalOpen && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md"
+                    onClick={() => setIsModalOpen(false)}
+                >
+                    <div
+                        className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl relative animate-in zoom-in-95 duration-200 text-white"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            onClick={() => setIsModalOpen(false)}
+                            className="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors"
+                        >
+                            <IconClose className="w-5 h-5" />
+                        </button>
+
+                        <h2 className="text-base font-bold text-white mb-4 uppercase tracking-wide">Configure Sync</h2>
+
+                        <form onSubmit={handleSyncSubmit} className="space-y-4">
+                            {/* Sync Pin */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Sync Pin</label>
+                                <input
+                                    type="password"
+                                    placeholder="••••••••"
+                                    required
+                                    value={pin}
+                                    onChange={(e) => setPin(e.target.value)}
+                                    className="w-full px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                                />
+                            </div>
+
+                            {/* Sync Days */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Sync Range</label>
+                                <select
+                                    value={days}
+                                    onChange={(e) => setDays(Number(e.target.value))}
+                                    className="w-full px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
+                                >
+                                    <option value={1}>1 Day</option>
+                                    <option value={7}>7 Days (Default)</option>
+                                    <option value={14}>14 Days</option>
+                                    <option value={30}>30 Days</option>
+                                    <option value={90}>90 Days</option>
+                                    <option value={180}>180 Days</option>
+                                    <option value={365}>1 Year</option>
+                                    <option value={2190}>6 Years</option>
+                                </select>
+                            </div>
+
+                            {/* Data Types checkboxes */}
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Data to Sync</label>
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-3 px-3 py-2 bg-zinc-950/60 border border-zinc-850 rounded-xl cursor-pointer hover:border-zinc-700 transition-colors select-none">
+                                        <input
+                                            type="checkbox"
+                                            checked={syncActivities}
+                                            onChange={(e) => setSyncActivities(e.target.checked)}
+                                            className="rounded border-zinc-800 bg-zinc-950 text-indigo-500 focus:ring-0 cursor-pointer w-4 h-4"
+                                        />
+                                        <span className="text-xs font-semibold text-zinc-300">Activities</span>
+                                    </label>
+                                    <label className="flex items-center gap-3 px-3 py-2 bg-zinc-950/60 border border-zinc-850 rounded-xl cursor-pointer hover:border-zinc-700 transition-colors select-none">
+                                        <input
+                                            type="checkbox"
+                                            checked={syncSleep}
+                                            onChange={(e) => setSyncSleep(e.target.checked)}
+                                            className="rounded border-zinc-800 bg-zinc-950 text-indigo-500 focus:ring-0 cursor-pointer w-4 h-4"
+                                        />
+                                        <span className="text-xs font-semibold text-zinc-300">Sleep Data</span>
+                                    </label>
+                                    <label className="flex items-center gap-3 px-3 py-2 bg-zinc-950/60 border border-zinc-850 rounded-xl cursor-pointer hover:border-zinc-700 transition-colors select-none">
+                                        <input
+                                            type="checkbox"
+                                            checked={syncHealth}
+                                            onChange={(e) => setSyncHealth(e.target.checked)}
+                                            className="rounded border-zinc-800 bg-zinc-950 text-indigo-500 focus:ring-0 cursor-pointer w-4 h-4"
+                                        />
+                                        <span className="text-xs font-semibold text-zinc-300">Daily Health Stats</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {error && <p className="text-xs text-red-400 font-semibold">{error}</p>}
+
+                            <button
+                                type="submit"
+                                disabled={isSyncing}
+                                className="w-full py-2.5 rounded-xl bg-indigo-500 text-white hover:bg-indigo-600 disabled:opacity-50 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                            >
+                                {isSyncing ? 'Syncing…' : 'Trigger Sync'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </>
     );
 }
 

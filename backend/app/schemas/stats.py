@@ -184,4 +184,10 @@ class SportStatsResponse(BaseModel):
     avg_hr_this_week: float | None = None
     avg_hr_last_week: float | None = None
 
+class SyncRequest(BaseModel):
+    days: int = 7
+    sync_activities: bool = True
+    sync_sleep: bool = True
+    sync_health: bool = True
+
 
