@@ -327,7 +327,7 @@ export default function ActivityTypePage({
     });
 
     return (
-        <main className="p-6 md:p-10 max-w-6xl mx-auto space-y-8 w-full relative">
+        <main className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 w-full relative">
             {/* Header */}
             <div className="border-b border-zinc-800/60 pb-6 flex items-center justify-between">
                 <div>

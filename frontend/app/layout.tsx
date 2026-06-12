@@ -129,9 +129,9 @@ function NavigationSidebar({ children }: { children: React.ReactNode }) {
     });
 
     return (
-        <div className="flex min-h-screen bg-zinc-950 text-white">
+        <div className="flex h-screen overflow-hidden bg-zinc-950 text-white">
             {/* Sidebar */}
-            <aside className="w-60 bg-zinc-950 border-r border-zinc-800/70 flex flex-col justify-between flex-none">
+            <aside className="w-60 h-full bg-zinc-950 border-r border-zinc-800/70 flex flex-col justify-between flex-none overflow-y-auto">
                 <div className="p-5">
                     {/* Brand */}
                     <div className="flex items-center gap-2.5 mb-8 px-1">
@@ -178,7 +178,7 @@ function NavigationSidebar({ children }: { children: React.ReactNode }) {
             </aside>
 
             {/* Main content */}
-            <div className="flex-1 flex flex-col bg-zinc-950 overflow-y-auto">
+            <div className="flex-1 h-full overflow-y-auto bg-zinc-950">
                 {children}
             </div>
         </div>
