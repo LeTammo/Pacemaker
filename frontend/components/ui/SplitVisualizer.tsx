@@ -50,7 +50,7 @@ export const SplitVisualizer = ({ splits }: { splits: GarminSplit[] | null }) =>
     });
 
     return (
-        <div className="flex gap-2 overflow-x-auto pb-0.5">
+        <div className="flex justify-center gap-2 overflow-x-auto pb-0.5">
             {orderedSplits.map((split, idx) => {
                 const pace = getSplitPaceSeconds(split);
                 const dist = getSplitDistance(split);
@@ -60,7 +60,7 @@ export const SplitVisualizer = ({ splits }: { splits: GarminSplit[] | null }) =>
                     <div
                         key={idx}
                         className={`
-                            flex-none w-26 rounded-xl p-3 border transition-colors bg-zinc-800/50 border-zinc-700/40
+                            flex-none w-16 rounded-xl p-2 border transition-colors bg-zinc-800/50 border-zinc-700/40
                             ${paceTier === 1
                                 ? 'shadow shadow-emerald-500/35 hover:bg-emerald-500/20 border-emerald-500/50'
                                 : paceTier === 2
@@ -72,7 +72,7 @@ export const SplitVisualizer = ({ splits }: { splits: GarminSplit[] | null }) =>
                         `}
                     >
                         {/* Header */}
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center justify-between mb-0.5">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
                                 Km {idx + 1}
                             </span>
@@ -94,7 +94,7 @@ export const SplitVisualizer = ({ splits }: { splits: GarminSplit[] | null }) =>
                                 {formatPaceFromSeconds(pace)}
                             </p>
                         </div>
-                        <p className="text-[10px] text-zinc-500 mt-0.5">min/km</p>
+                        <p className="text-[10px] text-zinc-500">min/km</p>
 
                         {/* Distance */}
                         {dist !== null && (

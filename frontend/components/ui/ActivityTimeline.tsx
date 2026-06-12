@@ -9,6 +9,130 @@ interface ActivityTimelineProps {
     activityType?: string;
 }
 
+// ── SVG Icons ──────────────────────────────────────────────────────────────────
+
+function IconRunning({ className }: { className?: string }) {
+    return (
+        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="14.5" cy="3.5" r="1.5" />
+            <path d="M9 8l2.5 2L14 7l3 3" />
+            <path d="M6.5 21L9 14l3 2 2-5 3 4" />
+            <path d="M9 14l-2.5 7" />
+        </svg>
+    );
+}
+
+function IconSwimming({ className }: { className?: string }) {
+    return (
+        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2 18c1.4 0 2.5-.56 3.5-1.5S7.6 15 9 15s2.5.56 3.5 1.5S14.6 18 16 18s2.5-.56 3.5-1.5S21.6 15 23 15" />
+            <circle cx="15" cy="7" r="1.5" />
+            <path d="M10 11l2-4 2 2 2-3" />
+            <path d="M7 12l3-1" />
+        </svg>
+    );
+}
+
+function IconCycling({ className }: { className?: string }) {
+    return (
+        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="5.5" cy="17.5" r="3.5" />
+            <circle cx="18.5" cy="17.5" r="3.5" />
+            <path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11l-2-5 5-1.5-3.5-3 1.5-2" />
+            <path d="M5.5 17.5l3.5-5.5h7" />
+        </svg>
+    );
+}
+
+function IconActivity({ className }: { className?: string }) {
+    return (
+        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+        </svg>
+    );
+}
+
+function IconWalking({ className }: { className?: string }) {
+    return (
+        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="13" cy="4" r="1.5" />
+            <path d="M10 20v-6L7 10l3-4 3 3 2 4.5" />
+            <path d="M12 14l3 6" />
+        </svg>
+    );
+}
+
+function IconPilates({ className }: { className?: string }) {
+    return (
+        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="5" r="2" />
+            <path d="M5 20c3-3 7-3 10 0" />
+            <path d="M12 7v7l4 3" />
+            <path d="M12 10H8l-2 2" />
+        </svg>
+    );
+}
+
+function IconWalkpad({ className }: { className?: string }) {
+    return (
+        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 20h16M4 17h16M19 17l-3-6H8L5 17" />
+            <circle cx="12" cy="6" r="2" />
+        </svg>
+    );
+}
+
+function IconCardio({ className }: { className?: string }) {
+    return (
+        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+        </svg>
+    );
+}
+
+function IconStrength({ className }: { className?: string }) {
+    return (
+        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6.5 6.5h11M6.5 17.5h11M4 5h5v3H4zm11 0h5v3h-5zM4 16h5v3H4zm11 0h5v3h-5zM2 11.5h20" />
+        </svg>
+    );
+}
+
+function IconSmile({ className }: { className?: string }) {
+    return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+            <line x1="9" y1="9" x2="9.01" y2="9" />
+            <line x1="15" y1="9" x2="15.01" y2="9" />
+        </svg>
+    );
+}
+
+function IconFrown({ className }: { className?: string }) {
+    return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M16 16s-1.5-2-4-2-4 2-4 2" />
+            <line x1="9" y1="9" x2="9.01" y2="9" />
+            <line x1="15" y1="9" x2="15.01" y2="9" />
+        </svg>
+    );
+}
+
+function ActivityIcon({ type, className }: { type: string; className?: string }) {
+    const t = type.toLowerCase();
+    if (t.includes('run') && !t.includes('pad')) return <IconRunning className={className} />;
+    if (t.includes('swim')) return <IconSwimming className={className} />;
+    if (t.includes('cycl') || t.includes('bike') || t.includes('bik')) return <IconCycling className={className} />;
+    if (t.includes('walk') && !t.includes('pad')) return <IconWalking className={className} />;
+    if (t.includes('pilates')) return <IconPilates className={className} />;
+    if (t.includes('pad') || t.includes('treadmill')) return <IconWalkpad className={className} />;
+    if (t.includes('cardio') || t.includes('fitness')) return <IconCardio className={className} />;
+    if (t.includes('strength') || t.includes('weight') || t.includes('gym')) return <IconStrength className={className} />;
+    return <IconActivity className={className} />;
+}
+
 // ── Formatters ────────────────────────────────────────────────────────────────
 
 function formatPace(secPerKm: number | null | undefined): string {
@@ -33,38 +157,8 @@ function formatDuration(seconds: number): string {
     return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-function formatDate(iso: string): { weekday: string; date: string } {
-    const d = new Date(iso);
-    return {
-        weekday: d.toLocaleDateString(undefined, { weekday: 'long' }),
-        date: d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
-    };
-}
-
 function activityBadgeLabel(type: string): string {
     return type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function IconSmile({ className }: { className?: string }) {
-    return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M8 14s1.5 2 4 2 4-2 4-2" />
-            <line x1="9" y1="9" x2="9.01" y2="9" />
-            <line x1="15" y1="9" x2="15.01" y2="9" />
-        </svg>
-    );
-}
-
-function IconFrown({ className }: { className?: string }) {
-    return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M16 16s-1.5-2-4-2-4 2-4 2" />
-            <line x1="9" y1="9" x2="9.01" y2="9" />
-            <line x1="15" y1="9" x2="15.01" y2="9" />
-        </svg>
-    );
 }
 
 // ── Date Grouping Helpers ─────────────────────────────────────────────────────
@@ -184,30 +278,28 @@ function generateIntervals(
     return intervals;
 }
 
-// ── MetricCell ────────────────────────────────────────────────────────────────
+// ── MetricCell (3-Row Layout) ──────────────────────────────────────────────────
 
-function MetricCell({
+function MetricCell3Row({
     label,
     value,
     unit,
-    large = false,
 }: {
     label: string;
     value: React.ReactNode;
     unit?: string;
-    large?: boolean;
 }) {
     return (
-        <div className="flex flex-col gap-0.5 min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 whitespace-nowrap">
+        <div className="flex flex-col items-center text-center gap-0.5 min-w-0">
+            <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-550 whitespace-nowrap">
                 {label}
-            </p>
-            <div className="flex items-baseline gap-1">
-                <span className={`tabular-nums leading-none font-bold ${large ? 'text-2xl font-black text-indigo-300' : 'text-lg text-white'}`}>
-                    {value}
-                </span>
-                {unit && <span className="text-[11px] text-zinc-500 whitespace-nowrap">{unit}</span>}
-            </div>
+            </span>
+            <span className="text-base font-black text-white tabular-nums leading-none">
+                {value}
+            </span>
+            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
+                {unit || '\u00A0'}
+            </span>
         </div>
     );
 }
@@ -238,7 +330,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                         <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 whitespace-nowrap">
                             {interval.label}
                         </span>
-                        <div className="h-[1px] w-full bg-zinc-800/60" />
+                        <div className="h-px w-full bg-zinc-800/60" />
                     </div>
 
                     {/* Empty state or activities list */}
@@ -247,7 +339,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                             {index === 0 ? (
                                 <>
                                     <IconSmile className="w-8 h-8 text-indigo-400/80 animate-pulse" />
-                                    <p className="text-xs text-zinc-400 font-semibold uppercase tracking-wider text-center leading-relaxed">
+                                    <p className="text-xs text-zinc-400 font-semibold uppercase tracking-wider text-center max-w-sm leading-relaxed">
                                         {splitMode === 'days' && "No activity yet today — still time to get moving!"}
                                         {splitMode === 'weeks' && "No activity yet this week — let's build some momentum!"}
                                         {splitMode === 'months' && "No activity yet this month — plenty of time to get started!"}
@@ -256,7 +348,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                             ) : (
                                 <>
                                     <IconFrown className="w-8 h-8 text-zinc-600/60" />
-                                    <p className="text-[11px] text-zinc-500 font-semibold uppercase tracking-wider">No activity logged</p>
+                                    <p className="text-[11px] text-zinc-500 font-semibold uppercase tracking-wider">No activities logged</p>
                                 </>
                             )}
                         </div>
@@ -264,120 +356,121 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                         <div className="space-y-3">
                             {interval.activities.map((activity) => {
                                 const at = (activity.activity_type || '').toLowerCase();
-                                const isRun = at.includes('run');
+                                const isRun = at.includes('run') && !at.includes('pad');
                                 const isSwim = at.includes('swim');
+                                const isCycling = at.includes('cycl') || at.includes('bike') || at.includes('bik');
 
-                                const { weekday, date } = formatDate(activity.start_time);
                                 const distKm = activity.distance_meters
                                     ? (activity.distance_meters / 1000).toFixed(isSwim ? 2 : 1)
                                     : '0.0';
 
-                                // Unified HR display
+                                // Determine main stat for card header
+                                const hasDistance = !!activity.distance_meters && activity.distance_meters > 0;
+                                const displayMainStat = (layoutMode !== 'indoor' && hasDistance)
+                                    ? `${distKm} ${isSwim ? 'km' : 'km'}`
+                                    : (activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00');
+
+                                const hasSplits = isRun && layoutMode !== 'indoor' && !!activity.splits && activity.splits.length > 0;
+
+                                // Determine display name
+                                const displayName = activity.name || activityBadgeLabel(activity.activity_type || '');
+
+                                // Heart Rate metrics
                                 const hasHR = !!activity.average_heart_rate;
                                 const hrValue = hasHR
                                     ? activity.max_heart_rate
-                                        ? `${activity.average_heart_rate} / ${activity.max_heart_rate}`
+                                        ? `${activity.average_heart_rate}/${activity.max_heart_rate}`
                                         : `${activity.average_heart_rate}`
                                     : null;
-                                const hrUnit = hasHR
-                                    ? activity.max_heart_rate ? 'avg / max bpm' : 'avg bpm'
-                                    : undefined;
 
                                 return (
                                     <div
                                         key={activity.id}
                                         className="bg-zinc-900 border border-zinc-800/80 rounded-2xl overflow-hidden hover:border-zinc-700/80 hover:bg-zinc-900/80 transition-all duration-200"
                                     >
-                                        {/* Card header */}
-                                        <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-800/60">
+                                        {/* Card header — Optimized: Icon + Main Stat left, custom name right */}
+                                        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800/60 gap-3">
                                             <div className="flex items-center gap-3 min-w-0">
-                                                <span className="w-2 h-2 rounded-full flex-none bg-indigo-400" />
-                                                <span className="text-sm font-semibold text-white">{weekday}</span>
-                                                <span className="text-sm text-zinc-400">{date}</span>
-                                                {activity.name && (
-                                                    <span className="text-sm text-zinc-500 truncate hidden sm:block">
-                                                        · {activity.name}
-                                                    </span>
-                                                )}
+                                                <ActivityIcon type={activity.activity_type || ''} className="w-5.5 h-5.5 text-indigo-300 flex-none" />
+                                                <span className="text-base md:text-lg font-black text-indigo-300 tabular-nums leading-none">{displayMainStat}</span>
                                             </div>
-                                            <span className="text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider flex-none bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
-                                                {activityBadgeLabel(activity.activity_type || '')}
-                                            </span>
+                                            <span className="text-sm font-bold text-indigo-300 truncate text-right">{displayName}</span>
                                         </div>
 
-                                        {/* Card body */}
-                                        <div className="px-5 py-4">
-                                            <div className="flex items-start justify-between gap-4">
-                                                {/* Metrics */}
-                                                <div className="flex items-start gap-6 flex-wrap">
+                                        {/* Card body — Optimized: 3-row layout cells in responsive grid */}
+                                        <div className="px-4 py-3">
+                                            <div className={hasSplits ? "flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-8" : "flex flex-col gap-4"}>
+                                                {/* Metrics Grid */}
+                                                <div className="grid grid-cols-3 gap-2.5 md:flex md:gap-10 lg:flex-none">
                                                     {layoutMode === 'indoor' ? (
                                                         <>
-                                                            {/* Indoor Theme: Duration, Calories, HR */}
-                                                            <MetricCell
-                                                                label="Duration"
-                                                                value={activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00'}
-                                                                large
-                                                            />
+                                                            {/* Indoor: Duration (header), Calories, HR */}
                                                             {activity.calories && (
-                                                                <MetricCell
-                                                                    label="Calories"
-                                                                    value={activity.calories}
-                                                                    unit="kcal"
-                                                                />
+                                                                <MetricCell3Row label="Calories" value={activity.calories} unit="kcal" />
                                                             )}
                                                             {hrValue && (
-                                                                <MetricCell label="Heart Rate" value={hrValue} unit={hrUnit} />
+                                                                <MetricCell3Row label="Heart Rate" value={hrValue} unit="bpm" />
                                                             )}
                                                         </>
                                                     ) : layoutMode === 'distance_time' ? (
                                                         <>
-                                                            {/* Distance + Time Theme: Distance, Duration, Pace (min/km), HR */}
-                                                            <MetricCell label="Distance" value={distKm} unit="km" large />
-                                                            <MetricCell
+                                                            {/* Distance + Time: Distance (header), Duration, Pace, HR */}
+                                                            <MetricCell3Row
                                                                 label="Duration"
                                                                 value={activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00'}
+                                                                unit="time"
                                                             />
-                                                            <MetricCell
+                                                            <MetricCell3Row
                                                                 label="Avg Pace"
                                                                 value={formatPace(activity.average_pace_seconds)}
                                                                 unit="min/km"
                                                             />
                                                             {hrValue && (
-                                                                <MetricCell label="Heart Rate" value={hrValue} unit={hrUnit} />
+                                                                <MetricCell3Row label="Heart Rate" value={hrValue} unit="bpm" />
                                                             )}
                                                         </>
                                                     ) : (
                                                         <>
-                                                            {/* Default Theme: Sport-specific */}
-                                                            <MetricCell label="Distance" value={distKm} unit="km" large />
-                                                            <MetricCell
+                                                            {/* Default: Sport-specific */}
+                                                            <MetricCell3Row
                                                                 label="Duration"
                                                                 value={activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00'}
+                                                                unit="time"
                                                             />
                                                             {isRun && (
-                                                                <MetricCell
+                                                                <MetricCell3Row
                                                                     label="Avg Pace"
                                                                     value={formatPace(activity.average_pace_seconds)}
                                                                     unit="min/km"
                                                                 />
                                                             )}
                                                             {isSwim && (
-                                                                <MetricCell
+                                                                <MetricCell3Row
                                                                     label="Avg Pace"
                                                                     value={formatSwimPace(activity.average_pace_seconds)}
                                                                     unit="/25m"
                                                                 />
                                                             )}
+                                                            {isCycling && (
+                                                                <MetricCell3Row
+                                                                    label="Avg Speed"
+                                                                    value={activity.average_pace_seconds ? (3600 / activity.average_pace_seconds).toFixed(1) : '—'}
+                                                                    unit="km/h"
+                                                                />
+                                                            )}
+                                                            {!isRun && !isSwim && !isCycling && !hasDistance && activity.calories && (
+                                                                <MetricCell3Row label="Calories" value={activity.calories} unit="kcal" />
+                                                            )}
                                                             {hrValue && (
-                                                                <MetricCell label="Heart Rate" value={hrValue} unit={hrUnit} />
+                                                                <MetricCell3Row label="Heart Rate" value={hrValue} unit="bpm" />
                                                             )}
                                                         </>
                                                     )}
                                                 </div>
 
-                                                {/* Splits — running only in default/distance_time layouts */}
-                                                {isRun && layoutMode !== 'indoor' && activity.splits && activity.splits.length > 0 && (
-                                                    <div className="flex-none">
+                                                {/* Splits — running only, wrapped as full row below */}
+                                                {hasSplits && (
+                                                    <div className="pt-2.5 border-t border-zinc-800/40 lg:border-t-0 lg:pt-0">
                                                         <SplitVisualizer splits={activity.splits} />
                                                     </div>
                                                 )}

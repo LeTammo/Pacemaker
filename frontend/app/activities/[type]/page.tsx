@@ -27,18 +27,11 @@ function formatSwimPace(sec: number | null | undefined): string {
     return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 }
 
-function getWeekLabel(offset: 0 | -1): string {
-    const d = new Date();
-    d.setDate(d.getDate() - d.getDay() + 1 + offset * 7);
-    const end = new Date(d);
-    end.setDate(end.getDate() + 6);
-    const fmt = (dt: Date) => dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-    return `${fmt(d)} – ${fmt(end)}`;
-}
+
 
 // ── KPI Card ──────────────────────────────────────────────────────────────────
 
-function KpiCard({
+function KpiCard3Row({
     label,
     value,
     unit,
@@ -52,13 +45,13 @@ function KpiCard({
     accent?: string;
 }) {
     return (
-        <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-1.5 animate-in fade-in slide-in-from-bottom-2 duration-200">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{label}</p>
-            <div className="flex items-baseline gap-1.5">
-                <p className={`text-3xl font-black tabular-nums leading-none ${accent}`}>{value}</p>
-                {unit && <span className="text-xs text-zinc-500">{unit}</span>}
+        <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-4 flex flex-col items-center text-center gap-1 w-full animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">{label}</span>
+            <div className="flex items-baseline justify-center gap-1">
+                <span className={`text-2xl font-black tabular-nums leading-none ${accent}`}>{value}</span>
+                {unit && <span className="text-xs text-zinc-550 font-bold">{unit}</span>}
             </div>
-            {sub && <p className="text-xs text-zinc-500 mt-0.5">{sub}</p>}
+            {sub && <span className="text-[10px] text-zinc-400 font-semibold">{sub}</span>}
         </div>
     );
 }
@@ -67,78 +60,22 @@ function KpiCard({
 
 function RunningKpis({ stats }: { stats: any }) {
     return (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <KpiCard
-                label="Avg Distance"
-                value={stats?.average_distance_km?.toFixed(1) ?? '—'}
-                unit="km"
-                sub="All time"
-            />
-            <KpiCard
-                label="Avg Dist · This week"
-                value={stats?.avg_distance_this_week_km?.toFixed(1) ?? '—'}
-                unit="km"
-                sub={getWeekLabel(0)}
-            />
-            <KpiCard
-                label="Avg Dist · Last week"
-                value={stats?.avg_distance_last_week_km?.toFixed(1) ?? '—'}
-                unit="km"
-                sub={getWeekLabel(-1)}
-                accent="text-zinc-300"
-            />
-            <KpiCard
-                label="Avg Pace · This week"
-                value={formatPace(stats?.avg_pace_this_week_seconds)}
-                unit="min/km"
-                sub={getWeekLabel(0)}
-            />
-            <KpiCard
-                label="Avg Pace · Last week"
-                value={formatPace(stats?.avg_pace_last_week_seconds)}
-                unit="min/km"
-                sub={getWeekLabel(-1)}
-                accent="text-zinc-300"
-            />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <KpiCard3Row label="Avg Distance" value={stats?.average_distance_km?.toFixed(1) ?? '—'} unit="km" sub="All time" />
+            <KpiCard3Row label="Avg Dist" value={stats?.avg_distance_this_week_km?.toFixed(1) ?? '—'} unit="km" sub="This week" />
+            <KpiCard3Row label="Avg Pace" value={formatPace(stats?.avg_pace_this_week_seconds)} unit="min/km" sub="This week" />
+            <KpiCard3Row label="Avg Pace" value={formatPace(stats?.avg_pace_last_week_seconds)} unit="min/km" sub="Last week" accent="text-zinc-300" />
         </div>
     );
 }
 
 function SwimmingKpis({ stats }: { stats: any }) {
     return (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <KpiCard
-                label="Avg Distance"
-                value={stats?.average_distance_km?.toFixed(2) ?? '—'}
-                unit="km"
-                sub="All time"
-            />
-            <KpiCard
-                label="Avg Dist · This week"
-                value={stats?.avg_distance_this_week_km?.toFixed(2) ?? '—'}
-                unit="km"
-                sub={getWeekLabel(0)}
-            />
-            <KpiCard
-                label="Avg Dist · Last week"
-                value={stats?.avg_distance_last_week_km?.toFixed(2) ?? '—'}
-                unit="km"
-                sub={getWeekLabel(-1)}
-                accent="text-zinc-300"
-            />
-            <KpiCard
-                label="Avg Pace · This week"
-                value={formatSwimPace(stats?.avg_pace_this_week_seconds)}
-                unit="/25m"
-                sub={getWeekLabel(0)}
-            />
-            <KpiCard
-                label="Avg Pace · Last week"
-                value={formatSwimPace(stats?.avg_pace_last_week_seconds)}
-                unit="/25m"
-                sub={getWeekLabel(-1)}
-                accent="text-zinc-300"
-            />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <KpiCard3Row label="Avg Distance" value={stats?.average_distance_km?.toFixed(2) ?? '—'} unit="km" sub="All time" />
+            <KpiCard3Row label="Avg Dist" value={stats?.avg_distance_this_week_km?.toFixed(2) ?? '—'} unit="km" sub="This week" />
+            <KpiCard3Row label="Avg Pace" value={formatSwimPace(stats?.avg_pace_this_week_seconds)} unit="/25m" sub="This week" />
+            <KpiCard3Row label="Avg Pace" value={formatSwimPace(stats?.avg_pace_last_week_seconds)} unit="/25m" sub="Last week" accent="text-zinc-300" />
         </div>
     );
 }
@@ -159,78 +96,22 @@ function GenericKpis({ stats, type }: { stats: any; type: string }) {
     const paceLabel = isCycling ? 'Avg Speed' : 'Avg Pace';
 
     return (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <KpiCard
-                label="Avg Distance"
-                value={stats?.average_distance_km?.toFixed(1) ?? '—'}
-                unit="km"
-                sub="All time"
-            />
-            <KpiCard
-                label="Avg Dist · This week"
-                value={stats?.avg_distance_this_week_km?.toFixed(1) ?? '—'}
-                unit="km"
-                sub={getWeekLabel(0)}
-            />
-            <KpiCard
-                label="Avg Dist · Last week"
-                value={stats?.avg_distance_last_week_km?.toFixed(1) ?? '—'}
-                unit="km"
-                sub={getWeekLabel(-1)}
-                accent="text-zinc-300"
-            />
-            <KpiCard
-                label={`${paceLabel} · This week`}
-                value={formatPaceOrSpeed(stats?.avg_pace_this_week_seconds)}
-                unit={stats?.avg_pace_this_week_seconds ? paceUnit : undefined}
-                sub={getWeekLabel(0)}
-            />
-            <KpiCard
-                label={`${paceLabel} · Last week`}
-                value={formatPaceOrSpeed(stats?.avg_pace_last_week_seconds)}
-                unit={stats?.avg_pace_last_week_seconds ? paceUnit : undefined}
-                sub={getWeekLabel(-1)}
-                accent="text-zinc-300"
-            />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <KpiCard3Row label="Avg Distance" value={stats?.average_distance_km?.toFixed(1) ?? '—'} unit="km" sub="All time" />
+            <KpiCard3Row label="Avg Dist" value={stats?.avg_distance_this_week_km?.toFixed(1) ?? '—'} unit="km" sub="This week" />
+            <KpiCard3Row label={`${paceLabel}`} value={formatPaceOrSpeed(stats?.avg_pace_this_week_seconds)} unit={stats?.avg_pace_this_week_seconds ? paceUnit : undefined} sub="This week" />
+            <KpiCard3Row label={`${paceLabel}`} value={formatPaceOrSpeed(stats?.avg_pace_last_week_seconds)} unit={stats?.avg_pace_last_week_seconds ? paceUnit : undefined} sub="Last week" accent="text-zinc-300" />
         </div>
     );
 }
 
 function DistanceTimeKpis({ stats }: { stats: any }) {
     return (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <KpiCard
-                label="Avg Distance"
-                value={stats?.average_distance_km?.toFixed(1) ?? '—'}
-                unit="km"
-                sub="All time"
-            />
-            <KpiCard
-                label="Avg Dist · This week"
-                value={stats?.avg_distance_this_week_km?.toFixed(1) ?? '—'}
-                unit="km"
-                sub={getWeekLabel(0)}
-            />
-            <KpiCard
-                label="Avg Dist · Last week"
-                value={stats?.avg_distance_last_week_km?.toFixed(1) ?? '—'}
-                unit="km"
-                sub={getWeekLabel(-1)}
-                accent="text-zinc-300"
-            />
-            <KpiCard
-                label="Avg Pace · This week"
-                value={formatPace(stats?.avg_pace_this_week_seconds)}
-                unit="min/km"
-                sub={getWeekLabel(0)}
-            />
-            <KpiCard
-                label="Avg Pace · Last week"
-                value={formatPace(stats?.avg_pace_last_week_seconds)}
-                unit="min/km"
-                sub={getWeekLabel(-1)}
-                accent="text-zinc-300"
-            />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <KpiCard3Row label="Avg Distance" value={stats?.average_distance_km?.toFixed(1) ?? '—'} unit="km" sub="All time" />
+            <KpiCard3Row label="Avg Dist" value={stats?.avg_distance_this_week_km?.toFixed(1) ?? '—'} unit="km" sub="This week" />
+            <KpiCard3Row label="Avg Pace" value={formatPace(stats?.avg_pace_this_week_seconds)} unit="min/km" sub="This week" />
+            <KpiCard3Row label="Avg Pace" value={formatPace(stats?.avg_pace_last_week_seconds)} unit="min/km" sub="Last week" accent="text-zinc-300" />
         </div>
     );
 }
@@ -247,39 +128,11 @@ function IndoorKpis({ stats }: { stats: any }) {
     };
 
     return (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <KpiCard
-                label="Avg Duration"
-                value={formatDurationMin(stats?.average_duration_seconds)}
-                unit="min"
-                sub="All time"
-            />
-            <KpiCard
-                label="Avg Duration · This week"
-                value={formatDurationMin(stats?.avg_duration_this_week_seconds)}
-                unit="min"
-                sub={getWeekLabel(0)}
-            />
-            <KpiCard
-                label="Avg Duration · Last week"
-                value={formatDurationMin(stats?.avg_duration_last_week_seconds)}
-                unit="min"
-                sub={getWeekLabel(-1)}
-                accent="text-zinc-300"
-            />
-            <KpiCard
-                label="Avg HR · This week"
-                value={formatHr(stats?.avg_hr_this_week)}
-                unit="bpm"
-                sub={getWeekLabel(0)}
-            />
-            <KpiCard
-                label="Avg HR · Last week"
-                value={formatHr(stats?.avg_hr_last_week)}
-                unit="bpm"
-                sub={getWeekLabel(-1)}
-                accent="text-zinc-300"
-            />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <KpiCard3Row label="Avg Duration" value={formatDurationMin(stats?.average_duration_seconds)} unit="min" sub="All time" />
+            <KpiCard3Row label="Avg Duration" value={formatDurationMin(stats?.avg_duration_this_week_seconds)} unit="min" sub="This week" />
+            <KpiCard3Row label="Avg Duration" value={formatDurationMin(stats?.avg_duration_last_week_seconds)} unit="min" sub="Last week" accent="text-zinc-300" />
+            <KpiCard3Row label="Avg HR" value={formatHr(stats?.avg_hr_this_week)} unit="bpm" sub="This week" />
         </div>
     );
 }

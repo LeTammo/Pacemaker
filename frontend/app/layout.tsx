@@ -75,6 +75,52 @@ function IconWatch({ className }: { className?: string }) {
     );
 }
 
+function IconWalking({ className }: { className?: string }) {
+    return (
+        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="13" cy="4" r="1.5" />
+            <path d="M10 20v-6L7 10l3-4 3 3 2 4.5" />
+            <path d="M12 14l3 6" />
+        </svg>
+    );
+}
+
+function IconPilates({ className }: { className?: string }) {
+    return (
+        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="5" r="2" />
+            <path d="M5 20c3-3 7-3 10 0" />
+            <path d="M12 7v7l4 3" />
+            <path d="M12 10H8l-2 2" />
+        </svg>
+    );
+}
+
+function IconWalkpad({ className }: { className?: string }) {
+    return (
+        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 20h16M4 17h16M19 17l-3-6H8L5 17" />
+            <circle cx="12" cy="6" r="2" />
+        </svg>
+    );
+}
+
+function IconCardio({ className }: { className?: string }) {
+    return (
+        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+        </svg>
+    );
+}
+
+function IconStrength({ className }: { className?: string }) {
+    return (
+        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6.5 6.5h11M6.5 17.5h11M4 5h5v3H4zm11 0h5v3h-5zM4 16h5v3H4zm11 0h5v3h-5zM2 11.5h20" />
+        </svg>
+    );
+}
+
 // ── Activity type helpers ──────────────────────────────────────────────────────
 
 /** Human-readable label for a raw activity_type string */
@@ -87,20 +133,26 @@ function activityLabel(type: string): string {
 /** Return the best SVG icon component for a given activity type */
 function ActivityIcon({ type, className }: { type: string; className?: string }) {
     const t = type.toLowerCase();
-    if (t.includes('run')) return <IconRunning className={className} />;
+    if (t.includes('run') && !t.includes('pad')) return <IconRunning className={className} />;
     if (t.includes('swim')) return <IconSwimming className={className} />;
     if (t.includes('cycl') || t.includes('bike') || t.includes('bik')) return <IconCycling className={className} />;
+    if (t.includes('walk') && !t.includes('pad')) return <IconWalking className={className} />;
+    if (t.includes('pilates')) return <IconPilates className={className} />;
+    if (t.includes('pad') || t.includes('treadmill')) return <IconWalkpad className={className} />;
+    if (t.includes('cardio') || t.includes('fitness')) return <IconCardio className={className} />;
+    if (t.includes('strength') || t.includes('weight') || t.includes('gym')) return <IconStrength className={className} />;
     return <IconActivity className={className} />;
 }
 
 // ── Navigation Sidebar ─────────────────────────────────────────────────────────
 
-function NavLink({ href, label, icon }: { href: string; label: string; icon: React.ReactNode }) {
+function NavLink({ href, label, icon, onClick }: { href: string; label: string; icon: React.ReactNode; onClick?: () => void }) {
     const pathname = usePathname();
     const isActive = pathname === href;
     return (
         <Link
             href={href}
+            onClick={onClick}
             className={`
                 relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
                 transition-all duration-150 group
@@ -123,6 +175,7 @@ function NavLink({ href, label, icon }: { href: string; label: string; icon: Rea
 
 function NavigationSidebar({ children }: { children: React.ReactNode }) {
     const { isAuthenticated, login, logout } = useAuth();
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [passwordInput, setPasswordInput] = useState('');
     const [error, setError] = useState('');
@@ -148,8 +201,22 @@ function NavigationSidebar({ children }: { children: React.ReactNode }) {
 
     return (
         <div className="flex h-screen overflow-hidden bg-zinc-950 text-white">
+            {/* Mobile Sidebar Overlay Backdrop */}
+            {isSidebarOpen && (
+                <div
+                    className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm md:hidden animate-in fade-in duration-200"
+                    onClick={() => setIsSidebarOpen(false)}
+                />
+            )}
+
             {/* Sidebar */}
-            <aside className="w-60 h-full bg-zinc-950 border-r border-zinc-800/70 flex flex-col justify-between flex-none overflow-y-auto">
+            <aside
+                className={`
+                    fixed inset-y-0 left-0 z-45 w-60 bg-zinc-950 border-r border-zinc-800/70 flex flex-col justify-between overflow-y-auto transition-transform duration-300 ease-in-out
+                    md:static md:translate-x-0 md:flex md:h-full md:flex-none
+                    ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+                `}
+            >
                 <div className="p-5">
                     {/* Brand */}
                     <div className="flex items-center gap-2.5 mb-8 px-1">
@@ -166,6 +233,7 @@ function NavigationSidebar({ children }: { children: React.ReactNode }) {
                             href="/"
                             label="Dashboard"
                             icon={<IconDashboard />}
+                            onClick={() => setIsSidebarOpen(false)}
                         />
 
                         {/* Divider + sport links */}
@@ -182,6 +250,7 @@ function NavigationSidebar({ children }: { children: React.ReactNode }) {
                                         href={`/activities/${type}`}
                                         label={activityLabel(type)}
                                         icon={<ActivityIcon type={type} />}
+                                        onClick={() => setIsSidebarOpen(false)}
                                     />
                                 ))}
                             </>
@@ -198,7 +267,7 @@ function NavigationSidebar({ children }: { children: React.ReactNode }) {
                                 setPasswordInput('');
                                 setIsLoginModalOpen(true);
                             }}
-                            className="flex items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900/60 px-3 py-2.5 text-left text-sm font-semibold text-zinc-400 hover:text-white transition-all hover:bg-zinc-800/50 active:scale-[0.99] cursor-pointer"
+                            className="w-full flex items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900/60 px-3 py-2.5 text-left text-sm font-semibold text-zinc-400 hover:text-white transition-all hover:bg-zinc-800/50 active:scale-[0.99] cursor-pointer"
                         >
                             <span className="flex items-center gap-2">
                                 Login to Sync
@@ -211,7 +280,7 @@ function NavigationSidebar({ children }: { children: React.ReactNode }) {
                             </div>
                             <button
                                 onClick={logout}
-                                className="p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-red-900/30 hover:bg-red-950/10 text-zinc-400 hover:text-red-400 transition-all duration-205 active:scale-95 flex-non cursor-pointer"
+                                className="p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-red-900/30 hover:bg-red-950/10 text-zinc-400 hover:text-red-400 transition-all duration-205 active:scale-95 flex-none cursor-pointer"
                                 title="Log Out / Lock Screen"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-4 h-4">
@@ -225,6 +294,25 @@ function NavigationSidebar({ children }: { children: React.ReactNode }) {
 
             {/* Main content */}
             <div className="flex-1 h-full overflow-y-auto bg-zinc-950">
+                {/* Mobile Sticky Header Bar */}
+                <header className="flex items-center gap-3 px-6 py-4 border-b border-zinc-800/60 md:hidden bg-zinc-950/95 backdrop-blur-md sticky top-0 z-20 flex-none">
+                    <button
+                        onClick={() => setIsSidebarOpen(true)}
+                        className="p-2 -ml-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors cursor-pointer"
+                        title="Open menu"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-6 h-6">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                        </svg>
+                    </button>
+                    <div className="flex items-center gap-2">
+                        <IconWatch className="text-zinc-300 w-5 h-5 flex-none" />
+                        <span className="font-bold text-xs tracking-[0.12em] uppercase text-zinc-200">
+                            Your Stats
+                        </span>
+                    </div>
+                </header>
+
                 {children}
             </div>
 
