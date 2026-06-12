@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import api from '@/lib/api';
 import { getActivityTypes } from '@/lib/activities';
+import { AuthProvider, useAuth } from '@/lib/auth';
 import './globals.css';
 
 const queryClient = new QueryClient();
@@ -121,12 +122,29 @@ function NavLink({ href, label, icon }: { href: string; label: string; icon: Rea
 }
 
 function NavigationSidebar({ children }: { children: React.ReactNode }) {
+    const { isAuthenticated, login, logout } = useAuth();
+    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+    const [passwordInput, setPasswordInput] = useState('');
+    const [error, setError] = useState('');
+
     // Fetch distinct activity types to build the dynamic nav
     const { data: activityTypes = [] } = useQuery({
         queryKey: ['activity-types'],
         queryFn: getActivityTypes,
         staleTime: 5 * 60 * 1000, // cache for 5 min
     });
+
+    const handleLoginSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        const success = await login(passwordInput);
+        if (success) {
+            setIsLoginModalOpen(false);
+            setPasswordInput('');
+        } else {
+            setError('Invalid password');
+        }
+    };
 
     return (
         <div className="flex h-screen overflow-hidden bg-zinc-950 text-white">
@@ -171,9 +189,37 @@ function NavigationSidebar({ children }: { children: React.ReactNode }) {
                     </nav>
                 </div>
 
-                {/* Footer — Sync */}
+                {/* Footer — Sync / Auth Gate */}
                 <div className="p-5 border-t border-zinc-800/70">
-                    <SyncFooterAction />
+                    {!isAuthenticated ? (
+                        <button
+                            onClick={() => {
+                                setError('');
+                                setPasswordInput('');
+                                setIsLoginModalOpen(true);
+                            }}
+                            className="flex items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900/60 px-3 py-2.5 text-left text-sm font-semibold text-zinc-400 hover:text-white transition-all hover:bg-zinc-800/50 active:scale-[0.99] cursor-pointer"
+                        >
+                            <span className="flex items-center gap-2">
+                                Login to Sync
+                            </span>
+                        </button>
+                    ) : (
+                        <div className="flex gap-2 w-full items-center">
+                            <div className="flex-1">
+                                <SyncFooterAction />
+                            </div>
+                            <button
+                                onClick={logout}
+                                className="p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-red-900/30 hover:bg-red-950/10 text-zinc-400 hover:text-red-400 transition-all duration-205 active:scale-95 flex-non cursor-pointer"
+                                title="Log Out / Lock Screen"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-4 h-4">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                </svg>
+                            </button>
+                        </div>
+                    )}
                 </div>
             </aside>
 
@@ -181,6 +227,52 @@ function NavigationSidebar({ children }: { children: React.ReactNode }) {
             <div className="flex-1 h-full overflow-y-auto bg-zinc-950">
                 {children}
             </div>
+
+            {/* Login Modal */}
+            {isLoginModalOpen && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md"
+                    onClick={() => setIsLoginModalOpen(false)}
+                >
+                    <div
+                        className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl relative animate-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            onClick={() => setIsLoginModalOpen(false)}
+                            className="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+
+                        <h2 className="text-base font-bold text-white mb-4 uppercase tracking-wide">Enter Dashboard Password</h2>
+
+                        <form onSubmit={handleLoginSubmit} className="space-y-4">
+                            <div className="space-y-2">
+                                <input
+                                    name="password"
+                                    type="password"
+                                    placeholder="••••••••"
+                                    required
+                                    autoFocus
+                                    value={passwordInput}
+                                    onChange={(e) => setPasswordInput(e.target.value)}
+                                    className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                                />
+                                {error && <p className="text-xs text-red-400 font-semibold">{error}</p>}
+                            </div>
+                            <button
+                                type="submit"
+                                className="w-full py-2.5 rounded-xl bg-indigo-500 text-white hover:bg-indigo-600 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                            >
+                                Unlock
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -217,13 +309,12 @@ function SyncFooterAction() {
         <button
             onClick={triggerSync}
             disabled={isSyncing}
-            className="w-full flex items-center justify-between gap-3 rounded-xl border border-zinc-700/60 bg-zinc-800/70 px-3 py-2.5 text-left text-sm font-semibold text-white transition-all hover:bg-zinc-700/70 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full flex items-center justify-between gap-3 rounded-xl border border-zinc-700/60 bg-zinc-800/70 px-3 py-2.5 text-left text-sm font-semibold text-white transition-all hover:bg-zinc-700/70 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
         >
             <span className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-none" />
-                {isSyncing ? 'Syncing…' : 'Sync Garmin'}
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-none animate-pulse" />
+                {isSyncing ? 'Syncing…' : 'Sync'}
             </span>
-            <span className="text-[10px] uppercase tracking-wider text-zinc-400">Pin required</span>
         </button>
     );
 }
@@ -233,7 +324,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <html lang="en">
         <body>
         <QueryClientProvider client={queryClient}>
-            <NavigationSidebar>{children}</NavigationSidebar>
+            <AuthProvider>
+                <NavigationSidebar>{children}</NavigationSidebar>
+            </AuthProvider>
         </QueryClientProvider>
         </body>
         </html>

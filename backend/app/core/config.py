@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     app_name: str = "Garmin Dashboard"
     debug: bool = False
     log_level: str = "INFO"
+    admin_password: str = Field("admin", env="ADMIN_PASSWORD")
 
     # Server
     api_host: str = "0.0.0.0"
