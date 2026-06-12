@@ -37,7 +37,7 @@ async def get_db() -> AsyncSession:
 
 
 async def init_db() -> None:
-    from app.models import activity, health  # noqa: F401
+    from app.models import activity, health, settings as settings_model  # noqa: F401
 
     def _sqlite_db_path() -> Path | None:
         prefix = "sqlite+aiosqlite:///"

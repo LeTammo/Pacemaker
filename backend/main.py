@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api import activities, sync, stats
+from app.api import activities, sync, stats, settings as settings_api
 from app.services.sync_service import sync_service
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from contextlib import asynccontextmanager
@@ -26,6 +26,7 @@ app.add_middleware(
 app.include_router(activities.router, prefix=settings.api_prefix)
 app.include_router(sync.router, prefix=settings.api_prefix)
 app.include_router(stats.router, prefix=settings.api_prefix)
+app.include_router(settings_api.router, prefix=settings.api_prefix)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

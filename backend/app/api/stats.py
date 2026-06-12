@@ -206,27 +206,32 @@ async def get_activity_stats(activity_type: str, db: AsyncSession = Depends(get_
     else:
         cond = Activity.activity_type == activity_type
 
-    # Total and Average distance
+    # Total and Average distance & duration
     total_q = select(
         func.count(Activity.id),
         func.coalesce(func.avg(Activity.distance_meters), 0),
+        func.coalesce(func.avg(Activity.duration_seconds), 0),
     ).where(cond)
     res = await db.execute(total_q)
-    total_count, avg_dist = res.one()
+    total_count, avg_dist, avg_duration = res.one()
 
-    # Weekly distance & pace averages
-    async def avg_distance_pace_in_range(start: datetime, end: datetime):
+    # Weekly metrics averages
+    async def avg_metrics_in_range(start: datetime, end: datetime):
         q = select(
             func.avg(Activity.distance_meters),
             func.avg(Activity.average_pace_seconds),
+            func.avg(Activity.duration_seconds),
+            func.avg(Activity.average_heart_rate),
         ).where(cond, Activity.start_time >= start, Activity.start_time < end)
         row = (await db.execute(q)).one()
         avg_d = round(row[0] / 1000.0, 2) if row[0] else None
         avg_p = round(row[1], 2) if row[1] else None
-        return avg_d, avg_p
+        avg_dur = round(row[2], 1) if row[2] else None
+        avg_hr = round(row[3], 1) if row[3] else None
+        return avg_d, avg_p, avg_dur, avg_hr
 
-    avg_dist_this_week, avg_pace_this_week = await avg_distance_pace_in_range(this_week_start, this_week_end)
-    avg_dist_last_week, avg_pace_last_week = await avg_distance_pace_in_range(last_week_start, last_week_end)
+    avg_dist_this_week, avg_pace_this_week, avg_dur_this_week, avg_hr_this_week = await avg_metrics_in_range(this_week_start, this_week_end)
+    avg_dist_last_week, avg_pace_last_week, avg_dur_last_week, avg_hr_last_week = await avg_metrics_in_range(last_week_start, last_week_end)
 
     return SportStatsResponse(
         activity_type=activity_type,
@@ -236,5 +241,10 @@ async def get_activity_stats(activity_type: str, db: AsyncSession = Depends(get_
         avg_distance_last_week_km=avg_dist_last_week,
         avg_pace_this_week_seconds=avg_pace_this_week,
         avg_pace_last_week_seconds=avg_pace_last_week,
+        average_duration_seconds=round(avg_duration, 1) if total_count else None,
+        avg_duration_this_week_seconds=avg_dur_this_week,
+        avg_duration_last_week_seconds=avg_dur_last_week,
+        avg_hr_this_week=avg_hr_this_week,
+        avg_hr_last_week=avg_hr_last_week,
     )
 

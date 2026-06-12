@@ -178,4 +178,10 @@ class SportStatsResponse(BaseModel):
     avg_distance_last_week_km: float | None
     avg_pace_this_week_seconds: float | None
     avg_pace_last_week_seconds: float | None
+    average_duration_seconds: float | None = None
+    avg_duration_this_week_seconds: float | None = None
+    avg_duration_last_week_seconds: float | None = None
+    avg_hr_this_week: float | None = None
+    avg_hr_last_week: float | None = None
+
 

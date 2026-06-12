@@ -94,7 +94,11 @@ export default function DashboardPage() {
                 {isLoading ? (
                     <div className="py-12 text-center text-zinc-500 text-sm">Querying data…</div>
                 ) : (
-                    <ActivityTimeline activities={activityData?.activities || []} />
+                    <ActivityTimeline
+                        activities={activityData?.activities || []}
+                        splitMode="days"
+                        layoutMode="default"
+                    />
                 )}
             </div>
         </main>
