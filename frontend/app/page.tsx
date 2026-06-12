@@ -50,12 +50,6 @@ export default function DashboardPage() {
 
     return (
         <main className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 w-full">
-            {/* Header */}
-            <div className="border-b border-zinc-800/60 pb-6">
-                <h1 className="text-2xl font-bold text-white tracking-tight">Dashboard</h1>
-                <p className="text-sm text-zinc-500 mt-0.5">Overview of all your training</p>
-            </div>
-
             {/* KPI Grid — 4 cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <DashboardKpiCard

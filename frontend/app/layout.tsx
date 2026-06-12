@@ -222,7 +222,7 @@ function NavigationSidebar({ children }: { children: React.ReactNode }) {
                     <div className="flex items-center gap-2.5 mb-8 px-1">
                         <IconWatch className="text-zinc-300 flex-none" />
                         <span className="font-bold text-sm tracking-[0.12em] uppercase text-zinc-200">
-                            Your Stats
+                            Tammo's Sport
                         </span>
                     </div>
 
