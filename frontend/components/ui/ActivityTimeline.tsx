@@ -336,11 +336,11 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                 if (item.type === 'collapsed') {
                     return (
                         <div key={item.key} className="flex flex-col items-center justify-center -mt-4 -mb-2 animate-in fade-in duration-200">
-                            <div className="w-px h-8 bg-amber-900/30" />
-                            <div className="px-3.5 py-1.5 rounded-full bg-zinc-900/50 text-[10px] font-black uppercase tracking-wider text-zinc-400 shadow-sm shadow-amber-950 backdrop-blur-sm select-none">
+                            <div className="w-px h-8 bg-amber-900/60" />
+                            <div className="px-3.5 py-1.5 rounded-full bg-zinc-900/50 text-[10px] font-black uppercase tracking-wider text-zinc-400 shadow-sm shadow-amber-900 backdrop-blur-sm select-none">
                                 {item.label}
                             </div>
-                            <div className="w-px h-8 bg-amber-900/30" />
+                            <div className="w-px h-8 bg-amber-900/60" />
                         </div>
                     );
                 }
