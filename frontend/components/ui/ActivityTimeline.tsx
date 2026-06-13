@@ -187,6 +187,131 @@ function MetricCell3Row({
     );
 }
 
+type TimelineItem =
+    | {
+          type: 'interval';
+          key: string;
+          label: string;
+          activities: Activity[];
+          isFirst?: boolean;
+      }
+    | {
+          type: 'collapsed';
+          key: string;
+          collapsedCount: number;
+          label: string;
+      };
+
+function formatCollapsedLabel(collapsedCount: number, splitMode: 'days' | 'weeks' | 'months'): string {
+    if (splitMode === 'days') {
+        if (collapsedCount < 14) {
+            return `+ ${collapsedCount} day${collapsedCount === 1 ? '' : 's'}`;
+        }
+        if (collapsedCount < 30) {
+            const weeks = Math.round(collapsedCount / 7);
+            return `+ ${weeks} week${weeks === 1 ? '' : 's'}`;
+        }
+        const months = Math.round(collapsedCount / 30.4375);
+        if (months < 12) {
+            const m = Math.max(1, months);
+            return `+ ${m} month${m === 1 ? '' : 's'}`;
+        }
+        const years = Math.round((collapsedCount / 365.25) * 2) / 2;
+        const yearsStr = years.toString().replace('.', ',');
+        return `+ ${yearsStr} year${years === 1 ? '' : 's'}`;
+    } else if (splitMode === 'weeks') {
+        if (collapsedCount < 5) {
+            return `+ ${collapsedCount} week${collapsedCount === 1 ? '' : 's'}`;
+        }
+        const months = Math.round((collapsedCount * 7) / 30.4375);
+        if (months < 12) {
+            const m = Math.max(1, months);
+            return `+ ${m} month${m === 1 ? '' : 's'}`;
+        }
+        const years = Math.round((collapsedCount / 52.177) * 2) / 2;
+        const yearsStr = years.toString().replace('.', ',');
+        return `+ ${yearsStr} year${years === 1 ? '' : 's'}`;
+    } else {
+        // months
+        if (collapsedCount < 12) {
+            return `+ ${collapsedCount} month${collapsedCount === 1 ? '' : 's'}`;
+        }
+        const years = Math.round((collapsedCount / 12) * 2) / 2;
+        const yearsStr = years.toString().replace('.', ',');
+        return `+ ${yearsStr} year${years === 1 ? '' : 's'}`;
+    }
+}
+
+function buildTimelineItems(
+    intervals: { key: string; label: string; activities: Activity[] }[],
+    splitMode: 'days' | 'weeks' | 'months'
+): TimelineItem[] {
+    const items: TimelineItem[] = [];
+    let i = 0;
+    const n = intervals.length;
+
+    while (i < n) {
+        if (intervals[i].activities.length > 0) {
+            items.push({
+                type: 'interval',
+                key: intervals[i].key,
+                label: intervals[i].label,
+                activities: intervals[i].activities,
+                isFirst: i === 0
+            });
+            i++;
+        } else {
+            // Find consecutive empty intervals
+            let j = i;
+            while (j < n && intervals[j].activities.length === 0) {
+                j++;
+            }
+            const runLength = j - i;
+
+            if (runLength <= 2) {
+                for (let k = i; k < j; k++) {
+                    items.push({
+                        type: 'interval',
+                        key: intervals[k].key,
+                        label: intervals[k].label,
+                        activities: [],
+                        isFirst: k === 0
+                    });
+                }
+            } else {
+                // Keep the first empty interval
+                items.push({
+                    type: 'interval',
+                    key: intervals[i].key,
+                    label: intervals[i].label,
+                    activities: [],
+                    isFirst: i === 0
+                });
+
+                // Collapse intermediate empty intervals
+                const collapsedCount = runLength - 2;
+                items.push({
+                    type: 'collapsed',
+                    key: `collapsed-${intervals[i+1].key}-${intervals[j-2].key}`,
+                    collapsedCount,
+                    label: formatCollapsedLabel(collapsedCount, splitMode)
+                });
+
+                // Keep the last empty interval
+                items.push({
+                    type: 'interval',
+                    key: intervals[j-1].key,
+                    label: intervals[j-1].label,
+                    activities: [],
+                    isFirst: (j - 1) === 0
+                });
+            }
+            i = j;
+        }
+    }
+    return items;
+}
+
 // ── Main Component ─────────────────────────────────────────────────────────────
 
 export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
@@ -203,169 +328,185 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
     }
 
     const intervals = generateIntervals(activities, splitMode);
+    const timelineItems = buildTimelineItems(intervals, splitMode);
 
     return (
         <div className="space-y-6">
-            {intervals.map((interval, index) => (
-                <div key={interval.key} className="space-y-3">
-                    {/* Interval Divider */}
-                    <div className="flex items-center gap-4 py-2">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 whitespace-nowrap">
-                            {interval.label}
-                        </span>
-                        <div className="h-px w-full bg-zinc-800/60" />
-                    </div>
-
-                    {/* Empty state or activities list */}
-                    {interval.activities.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-8 px-4 bg-zinc-950/40 border border-dashed border-zinc-800/60 rounded-2xl gap-3 transition-all duration-200">
-                            {index === 0 ? (
-                                <>
-                                    <IconSmile className="w-8 h-8 text-indigo-400/80 animate-pulse" />
-                                    <p className="text-xs text-zinc-400 font-semibold uppercase tracking-wider text-center max-w-sm leading-relaxed">
-                                        {splitMode === 'days' && "No activity yet today — still time to get moving!"}
-                                        {splitMode === 'weeks' && "No activity yet this week — let's build some momentum!"}
-                                        {splitMode === 'months' && "No activity yet this month — plenty of time to get started!"}
-                                    </p>
-                                </>
-                            ) : (
-                                <>
-                                    <IconFrown className="w-8 h-8 text-zinc-600/60" />
-                                    <p className="text-[11px] text-zinc-500 font-semibold uppercase tracking-wider">No activities logged</p>
-                                </>
-                            )}
+            {timelineItems.map((item) => {
+                if (item.type === 'collapsed') {
+                    return (
+                        <div key={item.key} className="flex flex-col items-center justify-center -mt-4 -mb-2 animate-in fade-in duration-200">
+                            <div className="w-px h-8 bg-amber-900/30" />
+                            <div className="px-3.5 py-1.5 rounded-full bg-zinc-900/50 text-[10px] font-black uppercase tracking-wider text-zinc-400 shadow-sm shadow-amber-950 backdrop-blur-sm select-none">
+                                {item.label}
+                            </div>
+                            <div className="w-px h-8 bg-amber-900/30" />
                         </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {interval.activities.map((activity) => {
-                                const at = (activity.activity_type || '').toLowerCase();
-                                const isRun = at.includes('run') && !at.includes('pad');
-                                const isSwim = at.includes('swim');
-                                const isCycling = at.includes('cycl') || at.includes('bike') || at.includes('bik');
+                    );
+                }
 
-                                const distKm = activity.distance_meters
-                                    ? (activity.distance_meters / 1000).toFixed(isSwim ? 2 : 1)
-                                    : '0.0';
+                // Standard interval
+                return (
+                    <div key={item.key} className="space-y-3">
+                        {/* Interval Divider */}
+                        <div className="flex items-center gap-4 py-2">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 whitespace-nowrap">
+                                {item.label}
+                            </span>
+                            <div className="h-px w-full bg-zinc-800/60" />
+                        </div>
 
-                                // Determine main stat for card header
-                                const hasDistance = !!activity.distance_meters && activity.distance_meters > 0;
-                                const displayMainStat = (layoutMode !== 'indoor' && hasDistance)
-                                    ? `${distKm} ${isSwim ? 'km' : 'km'}`
-                                    : (activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00');
+                        {/* Empty state or activities list */}
+                        {item.activities.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-8 px-4 bg-zinc-950/40 border border-dashed border-zinc-800/60 rounded-2xl gap-3 transition-all duration-200">
+                                {item.isFirst ? (
+                                    <>
+                                        <IconSmile className="w-8 h-8 text-indigo-400/80 animate-pulse" />
+                                        <p className="text-xs text-zinc-400 font-semibold uppercase tracking-wider text-center max-w-sm leading-relaxed">
+                                            {splitMode === 'days' && "No activity yet today — still time to get moving!"}
+                                            {splitMode === 'weeks' && "No activity yet this week — let's build some momentum!"}
+                                            {splitMode === 'months' && "No activity yet this month — plenty of time to get started!"}
+                                        </p>
+                                    </>
+                                ) : (
+                                    <div className="flex flex-row items-center gap-2">
+                                        <IconFrown className="w-8 h-8 text-zinc-600/60" />
+                                        <p className="text-[11px] text-zinc-500 font-semibold uppercase tracking-wider">No activity logged</p>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {item.activities.map((activity) => {
+                                    const at = (activity.activity_type || '').toLowerCase();
+                                    const isRun = at.includes('run') && !at.includes('pad');
+                                    const isSwim = at.includes('swim');
+                                    const isCycling = at.includes('cycl') || at.includes('bike') || at.includes('bik');
 
-                                const hasSplits = isRun && layoutMode !== 'indoor' && !!activity.splits && activity.splits.length > 0;
+                                    const distKm = activity.distance_meters
+                                        ? (activity.distance_meters / 1000).toFixed(isSwim ? 2 : 1)
+                                        : '0.0';
 
-                                // Determine display name
-                                const displayName = activity.name || activityBadgeLabel(activity.activity_type || '');
+                                    // Determine main stat for card header
+                                    const hasDistance = !!activity.distance_meters && activity.distance_meters > 0;
+                                    const displayMainStat = (layoutMode !== 'indoor' && hasDistance)
+                                        ? `${distKm} ${isSwim ? 'km' : 'km'}`
+                                        : (activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00');
 
-                                // Heart Rate metrics
-                                const hasHR = !!activity.average_heart_rate;
-                                const hrValue = hasHR
-                                    ? activity.max_heart_rate
-                                        ? `${activity.average_heart_rate}/${activity.max_heart_rate}`
-                                        : `${activity.average_heart_rate}`
-                                    : null;
+                                    const hasSplits = isRun && layoutMode !== 'indoor' && !!activity.splits && activity.splits.length > 0;
 
-                                return (
-                                    <div
-                                        key={activity.id}
-                                        className="bg-zinc-900 border border-zinc-800/80 rounded-2xl overflow-hidden hover:border-zinc-700/80 hover:bg-zinc-900/80 transition-all duration-200"
-                                    >
-                                        {/* Card header — Optimized: Icon + Main Stat left, custom name right */}
-                                        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800/60 gap-3">
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                <ActivityIcon type={activity.activity_type || ''} className="w-5.5 h-5.5 text-indigo-300 flex-none" />
-                                                <span className="text-base md:text-lg font-black text-indigo-300 tabular-nums leading-none">{displayMainStat}</span>
+                                    // Determine display name
+                                    const displayName = activity.name || activityBadgeLabel(activity.activity_type || '');
+
+                                    // Heart Rate metrics
+                                    const hasHR = !!activity.average_heart_rate;
+                                    const hrValue = hasHR
+                                        ? activity.max_heart_rate
+                                            ? `${activity.average_heart_rate}/${activity.max_heart_rate}`
+                                            : `${activity.average_heart_rate}`
+                                        : null;
+
+                                    return (
+                                        <div
+                                            key={activity.id}
+                                            className="bg-zinc-900 border border-zinc-800/80 rounded-2xl overflow-hidden hover:border-zinc-700/80 hover:bg-zinc-900/80 transition-all duration-200"
+                                        >
+                                            {/* Card header — Optimized: Icon + Main Stat left, custom name right */}
+                                            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800/60 gap-3">
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                    <ActivityIcon type={activity.activity_type || ''} className="w-5.5 h-5.5 text-indigo-300 flex-none" />
+                                                    <span className="text-base md:text-lg font-black text-indigo-300 tabular-nums leading-none">{displayMainStat}</span>
+                                                </div>
+                                                <span className="text-sm font-bold text-indigo-300 truncate text-right">{displayName}</span>
                                             </div>
-                                            <span className="text-sm font-bold text-indigo-300 truncate text-right">{displayName}</span>
-                                        </div>
 
-                                        {/* Card body — Optimized: 3-row layout cells in responsive grid */}
-                                        <div className="px-4 py-3">
-                                            <div className={hasSplits ? "flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-8" : "flex flex-col gap-4"}>
-                                                {/* Metrics Grid */}
-                                                <div className="grid grid-cols-3 gap-2.5 md:flex md:gap-10 lg:flex-none">
-                                                    {layoutMode === 'indoor' ? (
-                                                        <>
-                                                            {/* Indoor: Duration (header), Calories, HR */}
-                                                            {activity.calories && (
-                                                                <MetricCell3Row label="Calories" value={activity.calories} unit="kcal" />
-                                                            )}
-                                                            {hrValue && (
-                                                                <MetricCell3Row label="Heart Rate" value={hrValue} unit="bpm" />
-                                                            )}
-                                                        </>
-                                                    ) : layoutMode === 'distance_time' ? (
-                                                        <>
-                                                            {/* Distance + Time: Distance (header), Duration, Pace, HR */}
-                                                            <MetricCell3Row
-                                                                label="Duration"
-                                                                value={activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00'}
-                                                                unit="time"
-                                                            />
-                                                            <MetricCell3Row
-                                                                label="Avg Pace"
-                                                                value={formatPace(activity.average_pace_seconds)}
-                                                                unit="min/km"
-                                                            />
-                                                            {hrValue && (
-                                                                <MetricCell3Row label="Heart Rate" value={hrValue} unit="bpm" />
-                                                            )}
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            {/* Default: Sport-specific */}
-                                                            <MetricCell3Row
-                                                                label="Duration"
-                                                                value={activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00'}
-                                                                unit="time"
-                                                            />
-                                                            {isRun && (
+                                            {/* Card body — Optimized: 3-row layout cells in responsive grid */}
+                                            <div className="px-4 py-3">
+                                                <div className={hasSplits ? "flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-8" : "flex flex-col gap-4"}>
+                                                    {/* Metrics Grid */}
+                                                    <div className="grid grid-cols-3 gap-2.5 md:flex md:gap-10 lg:flex-none">
+                                                        {layoutMode === 'indoor' ? (
+                                                            <>
+                                                                {/* Indoor: Duration (header), Calories, HR */}
+                                                                {activity.calories && (
+                                                                    <MetricCell3Row label="Calories" value={activity.calories} unit="kcal" />
+                                                                )}
+                                                                {hrValue && (
+                                                                    <MetricCell3Row label="Heart Rate" value={hrValue} unit="bpm" />
+                                                                )}
+                                                            </>
+                                                        ) : layoutMode === 'distance_time' ? (
+                                                            <>
+                                                                {/* Distance + Time: Distance (header), Duration, Pace, HR */}
+                                                                <MetricCell3Row
+                                                                    label="Duration"
+                                                                    value={activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00'}
+                                                                    unit="time"
+                                                                />
                                                                 <MetricCell3Row
                                                                     label="Avg Pace"
                                                                     value={formatPace(activity.average_pace_seconds)}
                                                                     unit="min/km"
                                                                 />
-                                                            )}
-                                                            {isSwim && (
+                                                                {hrValue && (
+                                                                    <MetricCell3Row label="Heart Rate" value={hrValue} unit="bpm" />
+                                                                )}
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                {/* Default: Sport-specific */}
                                                                 <MetricCell3Row
-                                                                    label="Avg Pace"
-                                                                    value={formatSwimPace(activity.average_pace_seconds)}
-                                                                    unit="/25m"
+                                                                    label="Duration"
+                                                                    value={activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00'}
+                                                                    unit="time"
                                                                 />
-                                                            )}
-                                                            {isCycling && (
-                                                                <MetricCell3Row
-                                                                    label="Avg Speed"
-                                                                    value={activity.average_pace_seconds ? (3600 / activity.average_pace_seconds).toFixed(1) : '—'}
-                                                                    unit="km/h"
-                                                                />
-                                                            )}
-                                                            {!isRun && !isSwim && !isCycling && !hasDistance && activity.calories && (
-                                                                <MetricCell3Row label="Calories" value={activity.calories} unit="kcal" />
-                                                            )}
-                                                            {hrValue && (
-                                                                <MetricCell3Row label="Heart Rate" value={hrValue} unit="bpm" />
-                                                            )}
-                                                        </>
+                                                                {isRun && (
+                                                                    <MetricCell3Row
+                                                                        label="Avg Pace"
+                                                                        value={formatPace(activity.average_pace_seconds)}
+                                                                        unit="min/km"
+                                                                    />
+                                                                )}
+                                                                {isSwim && (
+                                                                    <MetricCell3Row
+                                                                        label="Avg Pace"
+                                                                        value={formatSwimPace(activity.average_pace_seconds)}
+                                                                        unit="/25m"
+                                                                    />
+                                                                )}
+                                                                {isCycling && (
+                                                                    <MetricCell3Row
+                                                                        label="Avg Speed"
+                                                                        value={activity.average_pace_seconds ? (3600 / activity.average_pace_seconds).toFixed(1) : '—'}
+                                                                        unit="km/h"
+                                                                    />
+                                                                )}
+                                                                {!isRun && !isSwim && !isCycling && !hasDistance && activity.calories && (
+                                                                    <MetricCell3Row label="Calories" value={activity.calories} unit="kcal" />
+                                                                )}
+                                                                {hrValue && (
+                                                                    <MetricCell3Row label="Heart Rate" value={hrValue} unit="bpm" />
+                                                                )}
+                                                            </>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Splits — running only, wrapped as full row below */}
+                                                    {hasSplits && (
+                                                        <div className="pt-2.5 border-t border-zinc-800/40 lg:border-t-0 lg:pt-0">
+                                                            <SplitVisualizer splits={activity.splits} />
+                                                        </div>
                                                     )}
                                                 </div>
-
-                                                {/* Splits — running only, wrapped as full row below */}
-                                                {hasSplits && (
-                                                    <div className="pt-2.5 border-t border-zinc-800/40 lg:border-t-0 lg:pt-0">
-                                                        <SplitVisualizer splits={activity.splits} />
-                                                    </div>
-                                                )}
                                             </div>
                                         </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-            ))}
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                );
+            })}
         </div>
     );
 };
