@@ -48,6 +48,11 @@ class ActivityBase(BaseModel):
     training_effect: float | None = None
     anaerobic_training_effect: float | None = None
     vo2_max: float | None = None
+    total_reps: int | None = None
+    total_sets: int | None = None
+    active_sets: int | None = None
+    max_weight: float | None = None
+    summarized_exercise_sets: Any | None = None
 
 
 class ActivityResponse(ActivityBase):

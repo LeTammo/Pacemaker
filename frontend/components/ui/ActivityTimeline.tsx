@@ -10,7 +10,7 @@ import {
 interface ActivityTimelineProps {
     activities: Activity[];
     splitMode?: 'days' | 'weeks' | 'months';
-    layoutMode?: 'default' | 'distance_time' | 'indoor';
+    layoutMode?: 'default' | 'distance_time' | 'indoor' | 'strength';
     activityType?: string;
 }
 
@@ -389,9 +389,38 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
 
                                     // Determine main stat for card header
                                     const hasDistance = !!activity.distance_meters && activity.distance_meters > 0;
-                                    const displayMainStat = (layoutMode !== 'indoor' && hasDistance)
-                                        ? `${distKm} ${isSwim ? 'km' : 'km'}`
-                                        : (activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00');
+                                    
+                                    // Auto-detect strength based on activity type or data presence
+                                    const autoDetectStrength = at.includes('strength') || at.includes('kraft') || 
+                                        !!activity.total_reps || !!activity.total_sets;
+                                    
+                                    const totalReps = activity.total_reps;
+                                    const totalSets = activity.total_sets || activity.active_sets;
+                                    const maxWeight = activity.max_weight;
+                                    
+                                    // Calculate avg pause between sets: (total duration - active duration) / (sets - 1)
+                                    let avgPauseBetweenSetsSeconds: number | null = null;
+                                    if (activity.moving_duration_seconds && totalSets && totalSets > 1) {
+                                        const restTotal = Math.max(0, (activity.duration_seconds || 0) - activity.moving_duration_seconds);
+                                        avgPauseBetweenSetsSeconds = restTotal / (totalSets - 1);
+                                    }
+
+                                    let displayMainStat = "";
+                                    if ((layoutMode === 'strength' || (layoutMode === 'default' && autoDetectStrength))) {
+                                        if (totalSets && totalReps) {
+                                            displayMainStat = `${totalSets}s · ${totalReps}r`;
+                                        } else if (totalSets) {
+                                            displayMainStat = `${totalSets} sets`;
+                                        } else if (totalReps) {
+                                            displayMainStat = `${totalReps} reps`;
+                                        } else {
+                                            displayMainStat = activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00';
+                                        }
+                                    } else if (layoutMode !== 'indoor' && hasDistance) {
+                                        displayMainStat = `${distKm} km`;
+                                    } else {
+                                        displayMainStat = activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00';
+                                    }
 
                                     const hasSplits = isRun && layoutMode !== 'indoor' && !!activity.splits && activity.splits.length > 0;
 
@@ -425,70 +454,102 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                                                 <div className={hasSplits ? "flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-8" : "flex flex-col gap-4"}>
                                                     {/* Metrics Grid */}
                                                     <div className="grid grid-cols-3 gap-2.5 md:flex md:gap-10 lg:flex-none">
-                                                        {layoutMode === 'indoor' ? (
-                                                            <>
-                                                                {/* Indoor: Duration (header), Calories, HR */}
-                                                                {activity.calories && (
-                                                                    <MetricCell3Row label="Calories" value={activity.calories} unit="kcal" />
-                                                                )}
-                                                                {hrValue && (
-                                                                    <MetricCell3Row label="Heart Rate" value={hrValue} unit="bpm" />
-                                                                )}
-                                                            </>
-                                                        ) : layoutMode === 'distance_time' ? (
-                                                            <>
-                                                                {/* Distance + Time: Distance (header), Duration, Pace, HR */}
+                                                    {layoutMode === 'indoor' ? (
+                                                        <>
+                                                            {/* Indoor: Duration (header), Calories, HR */}
+                                                            {activity.calories && (
+                                                                <MetricCell3Row label="Calories" value={activity.calories} unit="kcal" />
+                                                            )}
+                                                            {hrValue && (
+                                                                <MetricCell3Row label="Heart Rate" value={hrValue} unit="bpm" />
+                                                            )}
+                                                        </>
+                                                    ) : layoutMode === 'distance_time' ? (
+                                                        <>
+                                                            {/* Distance + Time: Distance (header), Duration, Pace, HR */}
+                                                            <MetricCell3Row
+                                                                label="Duration"
+                                                                value={activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00'}
+                                                                unit="time"
+                                                            />
+                                                            <MetricCell3Row
+                                                                label="Avg Pace"
+                                                                value={formatPace(activity.average_pace_seconds)}
+                                                                unit="min/km"
+                                                            />
+                                                            {hrValue && (
+                                                                <MetricCell3Row label="Heart Rate" value={hrValue} unit="bpm" />
+                                                            )}
+                                                        </>
+                                                    ) : layoutMode === 'strength' ? (
+                                                        <>
+                                                            {/* Strength: Sets, Reps, Max Weight, Avg Pause */}
+                                                            {totalSets != null && (
                                                                 <MetricCell3Row
-                                                                    label="Duration"
-                                                                    value={activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00'}
-                                                                    unit="time"
+                                                                    label="Sets"
+                                                                    value={totalSets}
+                                                                    unit="sets"
                                                                 />
+                                                            )}
+                                                            {totalReps != null && (
+                                                                <MetricCell3Row
+                                                                    label="Reps"
+                                                                    value={totalReps}
+                                                                    unit="reps"
+                                                                />
+                                                            )}
+                                                            {maxWeight != null && maxWeight > 0 && (
+                                                                <MetricCell3Row
+                                                                    label="Max Weight"
+                                                                    value={maxWeight}
+                                                                    unit="kg"
+                                                                />
+                                                            )}
+                                                            {avgPauseBetweenSetsSeconds !== null && (
+                                                                <MetricCell3Row
+                                                                    label="Avg Pause"
+                                                                    value={Math.round(avgPauseBetweenSetsSeconds)}
+                                                                    unit="sec"
+                                                                />
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            {/* Default: Sport-specific */}
+                                                            <MetricCell3Row
+                                                                label="Duration"
+                                                                value={activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00'}
+                                                                unit="time"
+                                                            />
+                                                            {isRun && (
                                                                 <MetricCell3Row
                                                                     label="Avg Pace"
                                                                     value={formatPace(activity.average_pace_seconds)}
                                                                     unit="min/km"
                                                                 />
-                                                                {hrValue && (
-                                                                    <MetricCell3Row label="Heart Rate" value={hrValue} unit="bpm" />
-                                                                )}
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                {/* Default: Sport-specific */}
+                                                            )}
+                                                            {isSwim && (
                                                                 <MetricCell3Row
-                                                                    label="Duration"
-                                                                    value={activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00'}
-                                                                    unit="time"
+                                                                    label="Avg Pace"
+                                                                    value={formatSwimPace(activity.average_pace_seconds)}
+                                                                    unit="/25m"
                                                                 />
-                                                                {isRun && (
-                                                                    <MetricCell3Row
-                                                                        label="Avg Pace"
-                                                                        value={formatPace(activity.average_pace_seconds)}
-                                                                        unit="min/km"
-                                                                    />
-                                                                )}
-                                                                {isSwim && (
-                                                                    <MetricCell3Row
-                                                                        label="Avg Pace"
-                                                                        value={formatSwimPace(activity.average_pace_seconds)}
-                                                                        unit="/25m"
-                                                                    />
-                                                                )}
-                                                                {isCycling && (
-                                                                    <MetricCell3Row
-                                                                        label="Avg Speed"
-                                                                        value={activity.average_pace_seconds ? (3600 / activity.average_pace_seconds).toFixed(1) : '—'}
-                                                                        unit="km/h"
-                                                                    />
-                                                                )}
-                                                                {!isRun && !isSwim && !isCycling && !hasDistance && activity.calories && (
-                                                                    <MetricCell3Row label="Calories" value={activity.calories} unit="kcal" />
-                                                                )}
-                                                                {hrValue && (
-                                                                    <MetricCell3Row label="Heart Rate" value={hrValue} unit="bpm" />
-                                                                )}
-                                                            </>
-                                                        )}
+                                                            )}
+                                                            {isCycling && (
+                                                                <MetricCell3Row
+                                                                    label="Avg Speed"
+                                                                    value={activity.average_pace_seconds ? (3600 / activity.average_pace_seconds).toFixed(1) : '—'}
+                                                                    unit="km/h"
+                                                                />
+                                                            )}
+                                                            {!isRun && !isSwim && !isCycling && !hasDistance && activity.calories && (
+                                                                <MetricCell3Row label="Calories" value={activity.calories} unit="kcal" />
+                                                            )}
+                                                            {hrValue && (
+                                                                <MetricCell3Row label="Heart Rate" value={hrValue} unit="bpm" />
+                                                            )}
+                                                        </>
+                                                    )}
                                                     </div>
 
                                                     {/* Splits — running only, wrapped as full row below */}

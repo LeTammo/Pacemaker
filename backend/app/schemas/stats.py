@@ -184,6 +184,11 @@ class SportStatsResponse(BaseModel):
     avg_hr_this_week: float | None = None
     avg_hr_last_week: float | None = None
 
+    # Strength specific
+    avg_reps: float | None = None
+    avg_sets: float | None = None
+    avg_max_weight: float | None = None
+
 class SyncRequest(BaseModel):
     days: int = 7
     sync_activities: bool = True

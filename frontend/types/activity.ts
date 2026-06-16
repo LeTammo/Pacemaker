@@ -67,6 +67,20 @@ export interface Activity {
   average_strokes: number | null;
   water_estimated: number | null;
 
+  // Strength / resistance training (support both camelCase from backend JSON and snake_case)
+  summarized_exercise_sets?: {
+    category?: string | null;
+    reps?: number | null;
+    volume?: number | null;
+    duration?: number | null;
+    sets?: number | null;
+    maxWeight?: number | null;
+  }[] | null;
+  total_sets?: number | null;
+  active_sets?: number | null;
+  total_reps?: number | null;
+  max_weight?: number | null;
+
   // Splits & Laps
   splits: GarminSplit[] | null;
   laps: any | null;

@@ -79,6 +79,13 @@ class Activity(Base):
     vo2_max: Mapped[float | None] = mapped_column(Float)
     lactate_threshold_bpm: Mapped[int | None] = mapped_column(Integer)
 
+    # Strength specific
+    total_reps: Mapped[int | None] = mapped_column(Integer)
+    total_sets: Mapped[int | None] = mapped_column(Integer)
+    active_sets: Mapped[int | None] = mapped_column(Integer)
+    max_weight: Mapped[float | None] = mapped_column(Float)
+    summarized_exercise_sets: Mapped[dict | None] = mapped_column(JSON)
+
     # Raw data
     splits: Mapped[dict | None] = mapped_column(JSON)
     laps: Mapped[dict | None] = mapped_column(JSON)

@@ -222,16 +222,22 @@ async def get_activity_stats(activity_type: str, db: AsyncSession = Depends(get_
             func.avg(Activity.average_pace_seconds),
             func.avg(Activity.duration_seconds),
             func.avg(Activity.average_heart_rate),
+            func.avg(Activity.total_reps),
+            func.avg(Activity.total_sets),
+            func.avg(Activity.max_weight),
         ).where(cond, Activity.start_time >= start, Activity.start_time < end)
         row = (await db.execute(q)).one()
         avg_d = round(row[0] / 1000.0, 2) if row[0] else None
         avg_p = round(row[1], 2) if row[1] else None
         avg_dur = round(row[2], 1) if row[2] else None
         avg_hr = round(row[3], 1) if row[3] else None
-        return avg_d, avg_p, avg_dur, avg_hr
+        avg_reps = round(row[4], 1) if row[4] else None
+        avg_sets = round(row[5], 1) if row[5] else None
+        avg_weight = round(row[6], 1) if row[6] else None
+        return avg_d, avg_p, avg_dur, avg_hr, avg_reps, avg_sets, avg_weight
 
-    avg_dist_this_week, avg_pace_this_week, avg_dur_this_week, avg_hr_this_week = await avg_metrics_in_range(this_week_start, this_week_end)
-    avg_dist_last_week, avg_pace_last_week, avg_dur_last_week, avg_hr_last_week = await avg_metrics_in_range(last_week_start, last_week_end)
+    avg_dist_this_week, avg_pace_this_week, avg_dur_this_week, avg_hr_this_week, avg_reps_this_week, avg_sets_this_week, avg_weight_this_week = await avg_metrics_in_range(this_week_start, this_week_end)
+    avg_dist_last_week, avg_pace_last_week, avg_dur_last_week, avg_hr_last_week, _, _, _ = await avg_metrics_in_range(last_week_start, last_week_end)
 
     return SportStatsResponse(
         activity_type=activity_type,
@@ -246,5 +252,8 @@ async def get_activity_stats(activity_type: str, db: AsyncSession = Depends(get_
         avg_duration_last_week_seconds=avg_dur_last_week,
         avg_hr_this_week=avg_hr_this_week,
         avg_hr_last_week=avg_hr_last_week,
+        avg_reps=avg_reps_this_week,
+        avg_sets=avg_sets_this_week,
+        avg_max_weight=avg_weight_this_week,
     )
 

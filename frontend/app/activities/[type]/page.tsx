@@ -138,6 +138,22 @@ function IndoorKpis({ stats }: { stats: any }) {
     );
 }
 
+function StrengthKpis({ stats }: { stats: any }) {
+    const avgReps = stats?.avg_reps;
+    const avgSets = stats?.avg_sets;
+    const avgMaxWeight = stats?.avg_max_weight;
+    const avgHr = stats?.avg_hr_this_week;
+
+    return (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <KpiCard3Row label="Avg Reps" value={avgReps?.toFixed(1) ?? '—'} unit="reps" sub="This week" />
+            <KpiCard3Row label="Avg Sets" value={avgSets?.toFixed(1) ?? '—'} unit="sets" sub="This week" />
+            <KpiCard3Row label="Avg Max Weight" value={avgMaxWeight?.toFixed(1) ?? '—'} unit="kg" sub="This week" />
+            <KpiCard3Row label="Avg HR" value={avgHr ? Math.round(avgHr) : '—'} unit="bpm" sub="This week" accent="text-zinc-300" />
+        </div>
+    );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ActivityTypePage({
@@ -175,7 +191,7 @@ export default function ActivityTypePage({
 
     // Mutation to update settings in DB instantly
     const updateSettingsMutation = useMutation({
-        mutationFn: (newSettings: { split_mode?: 'days' | 'weeks' | 'months'; layout_mode?: 'default' | 'distance_time' | 'indoor' }) =>
+        mutationFn: (newSettings: { split_mode?: 'days' | 'weeks' | 'months'; layout_mode?: 'default' | 'distance_time' | 'indoor' | 'strength' }) =>
             updateActivitySettings(type, newSettings),
         onSuccess: (updated) => {
             queryClient.setQueryData(['activitySettings', type], updated);
@@ -202,6 +218,8 @@ export default function ActivityTypePage({
                 <IndoorKpis stats={stats} />
             ) : settings.layout_mode === 'distance_time' ? (
                 <DistanceTimeKpis stats={stats} />
+            ) : settings.layout_mode === 'strength' ? (
+                <StrengthKpis stats={stats} />
             ) : (
                 /* Default Themes per activity */
                 <>
@@ -272,7 +290,8 @@ export default function ActivityTypePage({
                                     {[
                                         { key: 'default', name: 'Default', desc: 'Sport-specific default layout and KPIs' },
                                         { key: 'distance_time', name: 'Distance & Time', desc: 'Focuses on mileage, duration, and pace (min/km)' },
-                                        { key: 'indoor', name: 'Indoor Sports', desc: 'Omit distance/pace; shows duration, heart rate, and calories' }
+                                        { key: 'indoor', name: 'Indoor Sports', desc: 'Omit distance/pace; shows duration, heart rate, and calories' },
+                                        { key: 'strength', name: 'Strength', desc: 'Focuses on sets, reps and weight' }
                                     ].map((theme) => (
                                         <button
                                             key={theme.key}
