@@ -40,9 +40,12 @@ function getMonthName(offset: 0 | -1): string {
 }
 
 export default function DashboardPage() {
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-    const startDate = oneMonthAgo.toISOString();
+    const startDate = useMemo(() => {
+        const d = new Date();
+        d.setMonth(d.getMonth() - 1);
+        d.setHours(0, 0, 0, 0);
+        return d.toISOString();
+    }, []);
 
     const { data: activityData, isLoading } = useQuery({
         queryKey: ['activities', startDate],
@@ -102,8 +105,5 @@ export default function DashboardPage() {
                 )}
             </div>
         </main>
-    );
-}
-
     );
 }
