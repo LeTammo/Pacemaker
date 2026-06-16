@@ -12,7 +12,7 @@ export const getActivities = async (
   if (activityType) params.type = activityType;
   if (startDate) params.start_date = startDate;
   if (endDate) params.end_date = endDate;
-  const { data } = await api.get('/activities', { params });
+  const { data } = await api.get('/activities/', { params });
   return data;
 };
 

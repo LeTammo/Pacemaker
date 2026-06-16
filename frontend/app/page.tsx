@@ -1,4 +1,5 @@
 'use client';
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getActivities } from '@/lib/activities';
 import { getStats } from '@/lib/stats';
@@ -101,5 +102,8 @@ export default function DashboardPage() {
                 )}
             </div>
         </main>
+    );
+}
+
     );
 }
