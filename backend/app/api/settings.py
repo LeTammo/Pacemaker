@@ -46,6 +46,12 @@ async def update_activity_settings(
         if payload.layout_mode is not None:
             settings.layout_mode = payload.layout_mode
 
-    await db.commit()
     await db.refresh(settings)
     return settings
+
+
+@router.get("/activities", response_model=list[ActivitySettingsResponse])
+async def list_all_activity_settings(db: AsyncSession = Depends(get_db)):
+    stmt = select(ActivitySettings)
+    res = await db.execute(stmt)
+    return res.scalars().all()

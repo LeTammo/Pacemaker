@@ -18,3 +18,8 @@ export const updateActivitySettings = async (
   const { data } = await api.put(`/settings/activity/${activityType}`, settings);
   return data;
 };
+
+export const getAllActivitySettings = async (): Promise<ActivitySettings[]> => {
+  const { data } = await api.get('/settings/activities');
+  return data;
+};

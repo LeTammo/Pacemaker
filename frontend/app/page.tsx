@@ -2,6 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getActivities } from '@/lib/activities';
 import { getStats } from '@/lib/stats';
+import { getAllActivitySettings } from '@/lib/settings';
 import { ActivityTimeline } from '@/components/ui/ActivityTimeline';
 
 function DashboardKpiCard({
@@ -48,6 +49,16 @@ export default function DashboardPage() {
         queryFn: getStats,
     });
 
+    const { data: allSettings } = useQuery({
+        queryKey: ['allActivitySettings'],
+        queryFn: getAllActivitySettings,
+    });
+
+    const perActivitySettings = allSettings?.reduce((acc, s) => {
+        acc[s.activity_type] = s.layout_mode;
+        return acc;
+    }, {} as Record<string, any>);
+
     return (
         <main className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 w-full">
             {/* KPI Grid — 4 cards */}
@@ -80,7 +91,8 @@ export default function DashboardPage() {
                     <ActivityTimeline
                         activities={activityData?.activities || []}
                         splitMode="days"
-                        layoutMode="default"
+                        layoutMode="auto"
+                        perActivitySettings={perActivitySettings}
                     />
                 )}
             </div>

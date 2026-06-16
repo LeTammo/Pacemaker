@@ -10,8 +10,9 @@ import {
 interface ActivityTimelineProps {
     activities: Activity[];
     splitMode?: 'days' | 'weeks' | 'months';
-    layoutMode?: 'default' | 'distance_time' | 'indoor' | 'strength';
+    layoutMode?: 'default' | 'distance_time' | 'indoor' | 'strength' | 'auto';
     activityType?: string;
+    perActivitySettings?: Record<string, 'default' | 'distance_time' | 'indoor' | 'strength'>;
 }
 
 // ── Activity type helpers ──────────────────────────────────────────────────────
@@ -314,11 +315,15 @@ function buildTimelineItems(
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 
-export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
-    activities,
-    splitMode = 'days',
-    layoutMode = 'default',
-}) => {
+export const ActivityTimeline: React.FC<ActivityTimelineProps> = (props) => {
+    const {
+        activities,
+        splitMode = 'days',
+        layoutMode = 'default',
+        perActivitySettings,
+        activityType,
+    } = props;
+
     if (!activities.length) {
         return (
             <div className="py-16 text-center text-zinc-600 text-sm">
@@ -390,6 +395,12 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                                     // Determine main stat for card header
                                     const hasDistance = !!activity.distance_meters && activity.distance_meters > 0;
                                     
+                                    // Resolve layout mode for this specific activity
+                                    let resolvedLayoutMode = layoutMode;
+                                    if (layoutMode === 'auto' && props.perActivitySettings) {
+                                        resolvedLayoutMode = props.perActivitySettings[at] || 'default';
+                                    }
+
                                     // Auto-detect strength based on activity type or data presence
                                     const autoDetectStrength = at.includes('strength') || at.includes('kraft') || 
                                         !!activity.total_reps || !!activity.total_sets;
@@ -406,7 +417,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                                     }
 
                                     let displayMainStat = "";
-                                    if ((layoutMode === 'strength' || (layoutMode === 'default' && autoDetectStrength))) {
+                                    if ((resolvedLayoutMode === 'strength' || (resolvedLayoutMode === 'default' && autoDetectStrength))) {
                                         if (totalSets && totalReps) {
                                             displayMainStat = `${totalSets}s · ${totalReps}r`;
                                         } else if (totalSets) {
@@ -416,13 +427,13 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                                         } else {
                                             displayMainStat = activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00';
                                         }
-                                    } else if (layoutMode !== 'indoor' && hasDistance) {
+                                    } else if (resolvedLayoutMode !== 'indoor' && hasDistance) {
                                         displayMainStat = `${distKm} km`;
                                     } else {
                                         displayMainStat = activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00';
                                     }
 
-                                    const hasSplits = isRun && layoutMode !== 'indoor' && !!activity.splits && activity.splits.length > 0;
+                                    const hasSplits = isRun && resolvedLayoutMode !== 'indoor' && !!activity.splits && activity.splits.length > 0;
 
                                     // Determine display name
                                     const displayName = activity.name || activityBadgeLabel(activity.activity_type || '');
@@ -454,7 +465,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                                                 <div className={hasSplits ? "flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-8" : "flex flex-col gap-4"}>
                                                     {/* Metrics Grid */}
                                                     <div className="grid grid-cols-3 gap-2.5 md:flex md:gap-10 lg:flex-none">
-                                                    {layoutMode === 'indoor' ? (
+                                                    {resolvedLayoutMode === 'indoor' ? (
                                                         <>
                                                             {/* Indoor: Duration (header), Calories, HR */}
                                                             {activity.calories && (
@@ -464,7 +475,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                                                                 <MetricCell3Row label="Heart Rate" value={hrValue} unit="bpm" />
                                                             )}
                                                         </>
-                                                    ) : layoutMode === 'distance_time' ? (
+                                                    ) : resolvedLayoutMode === 'distance_time' ? (
                                                         <>
                                                             {/* Distance + Time: Distance (header), Duration, Pace, HR */}
                                                             <MetricCell3Row
@@ -481,7 +492,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                                                                 <MetricCell3Row label="Heart Rate" value={hrValue} unit="bpm" />
                                                             )}
                                                         </>
-                                                    ) : layoutMode === 'strength' ? (
+                                                    ) : resolvedLayoutMode === 'strength' ? (
                                                         <>
                                                             {/* Strength: Sets, Reps, Max Weight, Avg Pause */}
                                                             {totalSets != null && (
