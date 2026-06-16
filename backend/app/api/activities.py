@@ -1,6 +1,7 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, distinct
+from sqlalchemy import select, distinct, func
 from app.db.database import get_db
 from app.models.activity import Activity
 from app.schemas.activity import ActivityListResponse, ActivityResponse
