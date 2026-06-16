@@ -18,8 +18,10 @@ async def list_activity_types(db: AsyncSession = Depends(get_db)):
 async def list_activities(
     db: AsyncSession = Depends(get_db),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=200),
-    activity_type: str | None = Query(None, alias="type")
+    page_size: int = Query(20, ge=1, le=500),
+    activity_type: str | None = Query(None, alias="type"),
+    start_date: datetime | None = None,
+    end_date: datetime | None = None
 ):
     offset = (page - 1) * page_size
     
@@ -27,10 +29,14 @@ async def list_activities(
     base_q = select(Activity)
     if activity_type:
         base_q = base_q.where(Activity.activity_type == activity_type)
+    if start_date:
+        base_q = base_q.where(Activity.start_time >= start_date)
+    if end_date:
+        base_q = base_q.where(Activity.start_time <= end_date)
 
     # Get total count
-    result = await db.execute(base_q)
-    total = len(result.scalars().all())
+    count_q = select(func.count()).select_from(base_q.subquery())
+    total = (await db.execute(count_q)).scalar() or 0
     
     # Get activities
     query = base_q.order_by(Activity.start_time.desc()).offset(offset).limit(page_size)

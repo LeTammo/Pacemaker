@@ -39,9 +39,13 @@ function getMonthName(offset: 0 | -1): string {
 }
 
 export default function DashboardPage() {
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    const startDate = oneMonthAgo.toISOString();
+
     const { data: activityData, isLoading } = useQuery({
-        queryKey: ['activities'],
-        queryFn: () => getActivities(1, 10),
+        queryKey: ['activities', startDate],
+        queryFn: () => getActivities(1, 100, undefined, startDate),
     });
 
     const { data: stats } = useQuery({
