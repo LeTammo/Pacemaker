@@ -46,6 +46,7 @@ async def update_activity_settings(
         if payload.layout_mode is not None:
             settings.layout_mode = payload.layout_mode
 
+    await db.commit()
     await db.refresh(settings)
     return settings
 

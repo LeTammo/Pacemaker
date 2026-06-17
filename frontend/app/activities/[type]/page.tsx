@@ -283,7 +283,7 @@ export default function ActivityTypePage({
                                         <button
                                             key={mode}
                                             onClick={() => updateSettingsMutation.mutate({ split_mode: mode })}
-                                            className={`py-2 px-3 rounded-xl border text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
+                                            className={`cursor-pointer py-2 px-3 rounded-xl border text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
                                                 settings.split_mode === mode
                                                     ? 'bg-indigo-500/10 text-indigo-300 border-indigo-500/35 shadow-lg'
                                                     : 'bg-zinc-950 border-zinc-850 text-zinc-400 hover:border-zinc-700 hover:text-white'
@@ -312,7 +312,7 @@ export default function ActivityTypePage({
                                         <button
                                             key={theme.key}
                                             onClick={() => updateSettingsMutation.mutate({ layout_mode: theme.key as any })}
-                                            className={`p-3 rounded-xl border text-left flex flex-col gap-0.5 transition-all duration-200 ${
+                                            className={`cursor-pointer p-3 rounded-xl border text-left flex flex-col gap-0.5 transition-all duration-200 ${
                                                 settings.layout_mode === theme.key
                                                     ? 'bg-indigo-500/10 text-indigo-300 border-indigo-500/35 shadow-lg'
                                                     : 'bg-zinc-950 border-zinc-850 text-zinc-400 hover:border-zinc-700 hover:text-white'
