@@ -10,9 +10,9 @@ import {
 interface ActivityTimelineProps {
     activities: Activity[];
     splitMode?: 'days' | 'weeks' | 'months' | 'years';
-    layoutMode?: 'default' | 'distance_time_pace' | 'distance_time_speed' | 'indoor' | 'strength' | 'auto';
+    layoutMode?: 'default' | 'distance_time_running' | 'distance_time_biking' | 'indoor' | 'strength' | 'auto';
     activityType?: string;
-    perActivitySettings?: Record<string, 'default' | 'distance_time_pace' | 'distance_time_speed' | 'indoor' | 'strength'>;
+    perActivitySettings?: Record<string, 'default' | 'distance_time_running' | 'distance_time_biking' | 'indoor' | 'strength'>;
 }
 
 // ── Activity type helpers ──────────────────────────────────────────────────────
@@ -429,9 +429,9 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = (props) => {
                                     }
 
                                     // Handle the new layout modes (map them for the purpose of metric display logic)
-                                    const isDistanceTimeRunning = resolvedLayoutMode === 'distance_time_pace';
-                                    const isDistanceTimeBiking = resolvedLayoutMode === 'distance_time_speed';
-                                    const isDistanceTime = resolvedLayoutMode === 'distance_time' || isDistanceTimeRunning || isDistanceTimeBiking;
+                                    const isDistanceTimeRunning = resolvedLayoutMode === 'distance_time_running';
+                                    const isDistanceTimeBiking = resolvedLayoutMode === 'distance_time_biking';
+                                    const isDistanceTime = isDistanceTimeRunning || isDistanceTimeBiking;
 
                                     // Auto-detect strength based on activity type or data presence
                                     const autoDetectStrength = at.includes('strength') || at.includes('kraft') || 
