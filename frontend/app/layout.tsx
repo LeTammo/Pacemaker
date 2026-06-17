@@ -7,13 +7,15 @@ import { useState } from 'react';
 import api from '@/lib/api';
 import { getActivityTypes } from '@/lib/activities';
 import { AuthProvider, useAuth } from '@/lib/auth';
+import { DeleteActivityModal } from '@/components/ui/DeleteActivityModal';
 import {
     IconDashboard,
     IconWatch,
     IconLock,
     IconMenu,
     IconClose,
-    ActivityIcon
+    ActivityIcon,
+    IconEdit
 } from '@/components/ui/Icons';
 import './globals.css';
 
@@ -29,6 +31,22 @@ function activityLabel(type: string): string {
 }
 
 // ── Navigation Sidebar ─────────────────────────────────────────────────────────
+
+function EditFooterAction() {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    return (
+        <>
+            <button
+                onClick={() => setIsModalOpen(true)}
+                className="p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-all duration-200 cursor-pointer"
+                title="Edit Activities"
+            >
+                <IconEdit className="w-4 h-4" />
+            </button>
+            <DeleteActivityModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+        </>
+    );
+}
 
 function NavLink({ href, label, icon, onClick }: { href: string; label: string; icon: React.ReactNode; onClick?: () => void }) {
     const pathname = usePathname();
@@ -162,6 +180,7 @@ function NavigationSidebar({ children }: { children: React.ReactNode }) {
                             <div className="flex-1">
                                 <SyncFooterAction />
                             </div>
+                            <EditFooterAction />
                             <button
                                 onClick={logout}
                                 className="p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-red-900/30 hover:bg-red-950/10 text-zinc-400 hover:text-red-400 transition-all duration-205 active:scale-95 flex-none cursor-pointer"

@@ -65,3 +65,19 @@ async def get_activity(
         raise HTTPException(status_code=404, detail="Activity not found")
         
     return ActivityResponse.model_validate(activity)
+
+@router.delete("/{activity_id}")
+async def delete_activity(
+    activity_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    query = select(Activity).where(Activity.id == activity_id)
+    result = await db.execute(query)
+    activity = result.scalar_one_or_none()
+
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    await db.delete(activity)
+    await db.commit()
+    return {"message": "Activity deleted"}

@@ -1,6 +1,10 @@
 import { Activity } from '@/types/activity';
 import api from './api';
 
+export const deleteActivity = async (activityId: number): Promise<void> => {
+  await api.delete(`/activities/${activityId}`);
+};
+
 export const getActivities = async (
   page = 1,
   pageSize = 20,
