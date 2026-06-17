@@ -9,10 +9,10 @@ import {
 
 interface ActivityTimelineProps {
     activities: Activity[];
-    splitMode?: 'days' | 'weeks' | 'months';
-    layoutMode?: 'default' | 'distance_time' | 'indoor' | 'strength' | 'auto';
+    splitMode?: 'days' | 'weeks' | 'months' | 'years';
+    layoutMode?: 'default' | 'distance_time_pace' | 'distance_time_speed' | 'indoor' | 'strength' | 'auto';
     activityType?: string;
-    perActivitySettings?: Record<string, 'default' | 'distance_time' | 'indoor' | 'strength'>;
+    perActivitySettings?: Record<string, 'default' | 'distance_time_pace' | 'distance_time_speed' | 'indoor' | 'strength'>;
 }
 
 // ── Activity type helpers ──────────────────────────────────────────────────────
@@ -80,9 +80,13 @@ function getMonthKey(d: Date): string {
     return `${y}-${m}-01`;
 }
 
+function getYearKey(d: Date): string {
+    return `${d.getFullYear()}-01-01`;
+}
+
 function generateIntervals(
     activities: Activity[],
-    splitMode: 'days' | 'weeks' | 'months'
+    splitMode: 'days' | 'weeks' | 'months' | 'years'
 ): { key: string; label: string; activities: Activity[] }[] {
     const intervals: { key: string; label: string; activities: Activity[] }[] = [];
     const today = new Date();
@@ -157,6 +161,25 @@ function generateIntervals(
             intervals.push({ key, label, activities: monthActs });
             cur.setMonth(cur.getMonth() - 1);
         }
+    } else if (splitMode === 'years') {
+        const curYear = new Date(today.getFullYear(), 0, 1);
+        const endYear = new Date(oldestDate.getFullYear(), 0, 1);
+
+        const cur = new Date(curYear);
+        const end = new Date(endYear);
+
+        while (cur >= end) {
+            const key = getYearKey(cur);
+            const label = cur.toLocaleDateString(undefined, { year: 'numeric' });
+
+            const yearActs = activities.filter(a => {
+                const actYear = getYearKey(getLocalDate(a.start_time));
+                return actYear === key;
+            });
+
+            intervals.push({ key, label, activities: yearActs });
+            cur.setFullYear(cur.getFullYear() - 1);
+        }
     }
 
     return intervals;
@@ -203,7 +226,7 @@ type TimelineItem =
           label: string;
       };
 
-function formatCollapsedLabel(collapsedCount: number, splitMode: 'days' | 'weeks' | 'months'): string {
+function formatCollapsedLabel(collapsedCount: number, splitMode: 'days' | 'weeks' | 'months' | 'years'): string {
     if (splitMode === 'days') {
         if (collapsedCount < 14) {
             return `+ ${collapsedCount} day${collapsedCount === 1 ? '' : 's'}`;
@@ -232,7 +255,7 @@ function formatCollapsedLabel(collapsedCount: number, splitMode: 'days' | 'weeks
         const years = Math.round((collapsedCount / 52.177) * 2) / 2;
         const yearsStr = years.toString().replace('.', ',');
         return `+ ${yearsStr} year${years === 1 ? '' : 's'}`;
-    } else {
+    } else if (splitMode === 'months') {
         // months
         if (collapsedCount < 12) {
             return `+ ${collapsedCount} month${collapsedCount === 1 ? '' : 's'}`;
@@ -240,12 +263,15 @@ function formatCollapsedLabel(collapsedCount: number, splitMode: 'days' | 'weeks
         const years = Math.round((collapsedCount / 12) * 2) / 2;
         const yearsStr = years.toString().replace('.', ',');
         return `+ ${yearsStr} year${years === 1 ? '' : 's'}`;
+    } else {
+        // years
+        return `+ ${collapsedCount} year${collapsedCount === 1 ? '' : 's'}`;
     }
 }
 
 function buildTimelineItems(
     intervals: { key: string; label: string; activities: Activity[] }[],
-    splitMode: 'days' | 'weeks' | 'months'
+    splitMode: 'days' | 'weeks' | 'months' | 'years'
 ): TimelineItem[] {
     const items: TimelineItem[] = [];
     let i = 0;
@@ -371,6 +397,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = (props) => {
                                             {splitMode === 'days' && "No activity yet today — still time to get moving!"}
                                             {splitMode === 'weeks' && "No activity yet this week — let's build some momentum!"}
                                             {splitMode === 'months' && "No activity yet this month — plenty of time to get started!"}
+                                            {splitMode === 'years' && "No activity yet this year — plenty of time to get started!"}
                                         </p>
                                     </>
                                 ) : (
@@ -400,6 +427,11 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = (props) => {
                                     if (layoutMode === 'auto' && props.perActivitySettings) {
                                         resolvedLayoutMode = props.perActivitySettings[at] || 'default';
                                     }
+
+                                    // Handle the new layout modes (map them for the purpose of metric display logic)
+                                    const isDistanceTimeRunning = resolvedLayoutMode === 'distance_time_pace';
+                                    const isDistanceTimeBiking = resolvedLayoutMode === 'distance_time_speed';
+                                    const isDistanceTime = resolvedLayoutMode === 'distance_time' || isDistanceTimeRunning || isDistanceTimeBiking;
 
                                     // Auto-detect strength based on activity type or data presence
                                     const autoDetectStrength = at.includes('strength') || at.includes('kraft') || 
@@ -433,7 +465,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = (props) => {
                                         displayMainStat = activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00';
                                     }
 
-                                    const hasSplits = isRun && resolvedLayoutMode !== 'indoor' && !!activity.splits && activity.splits.length > 0;
+                                    const hasSplits = (isRun || isCycling) && resolvedLayoutMode !== 'indoor' && !!activity.splits && activity.splits.length > 0;
 
                                     // Determine display name
                                     const displayName = activity.name || activityBadgeLabel(activity.activity_type || '');
@@ -475,19 +507,27 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = (props) => {
                                                                 <MetricCell3Row label="Heart Rate" value={hrValue} unit="bpm" />
                                                             )}
                                                         </>
-                                                    ) : resolvedLayoutMode === 'distance_time' ? (
+                                                    ) : isDistanceTime ? (
                                                         <>
-                                                            {/* Distance + Time: Distance (header), Duration, Pace, HR */}
+                                                            {/* Distance + Time: Distance (header), Duration, Pace/Speed, HR */}
                                                             <MetricCell3Row
                                                                 label="Duration"
                                                                 value={activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00'}
                                                                 unit="time"
                                                             />
-                                                            <MetricCell3Row
-                                                                label="Avg Pace"
-                                                                value={formatPace(activity.average_pace_seconds)}
-                                                                unit="min/km"
-                                                            />
+                                                            {isDistanceTimeBiking ? (
+                                                                <MetricCell3Row
+                                                                    label="Avg Speed"
+                                                                    value={activity.average_pace_seconds ? (3600 / activity.average_pace_seconds).toFixed(1) : '—'}
+                                                                    unit="km/h"
+                                                                />
+                                                            ) : (
+                                                                <MetricCell3Row
+                                                                    label="Avg Pace"
+                                                                    value={formatPace(activity.average_pace_seconds)}
+                                                                    unit="min/km"
+                                                                />
+                                                            )}
                                                             {hrValue && (
                                                                 <MetricCell3Row label="Heart Rate" value={hrValue} unit="bpm" />
                                                             )}
@@ -563,7 +603,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = (props) => {
                                                     )}
                                                     </div>
 
-                                                    {/* Splits — running only, wrapped as full row below */}
+                                                    {/* Splits — running/cycling only, wrapped as full row below */}
                                                     {hasSplits && (
                                                         <div className="pt-2.5 border-t border-zinc-800/40 lg:border-t-0 lg:pt-0">
                                                             <SplitVisualizer splits={activity.splits} />

@@ -106,13 +106,25 @@ function GenericKpis({ stats, type }: { stats: any; type: string }) {
     );
 }
 
-function DistanceTimeKpis({ stats }: { stats: any }) {
+function DistanceTimeKpis({ stats, showAsSpeed }: { stats: any, showAsSpeed?: boolean }) {
+    const formatPaceOrSpeed = (sec: number | null | undefined) => {
+        if (!sec || sec <= 0) return '—';
+        if (showAsSpeed) {
+            const speedKmh = 3600 / sec;
+            return speedKmh.toFixed(1);
+        }
+        return formatPace(sec);
+    };
+
+    const paceUnit = showAsSpeed ? 'km/h' : 'min/km';
+    const paceLabel = showAsSpeed ? 'Avg Speed' : 'Avg Pace';
+
     return (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <KpiCard3Row label="Avg Distance" value={stats?.average_distance_km?.toFixed(1) ?? '—'} unit="km" sub="All time" />
             <KpiCard3Row label="Avg Dist" value={stats?.avg_distance_this_week_km?.toFixed(1) ?? '—'} unit="km" sub="This week" />
-            <KpiCard3Row label="Avg Pace" value={formatPace(stats?.avg_pace_this_week_seconds)} unit="min/km" sub="This week" />
-            <KpiCard3Row label="Avg Pace" value={formatPace(stats?.avg_pace_last_week_seconds)} unit="min/km" sub="Last week" accent="text-zinc-300" />
+            <KpiCard3Row label={paceLabel} value={formatPaceOrSpeed(stats?.avg_pace_this_week_seconds)} unit={stats?.avg_pace_this_week_seconds ? paceUnit : undefined} sub="This week" />
+            <KpiCard3Row label={paceLabel} value={formatPaceOrSpeed(stats?.avg_pace_last_week_seconds)} unit={stats?.avg_pace_last_week_seconds ? paceUnit : undefined} sub="Last week" accent="text-zinc-300" />
         </div>
     );
 }
@@ -168,6 +180,7 @@ export default function ActivityTypePage({
 
     const isRun = type === 'running';
     const isSwim = ['lap_swimming', 'swimming', 'lap-swimming', 'swim', 'lap_swim'].includes(type);
+    const isCycling = type.includes('cycle') || type.includes('bike') || type.includes('biking');
 
     // Fetch activities list
     const { data, isLoading } = useQuery({
@@ -191,7 +204,7 @@ export default function ActivityTypePage({
 
     // Mutation to update settings in DB instantly
     const updateSettingsMutation = useMutation({
-        mutationFn: (newSettings: { split_mode?: 'days' | 'weeks' | 'months'; layout_mode?: 'default' | 'distance_time' | 'indoor' | 'strength' }) =>
+        mutationFn: (newSettings: { split_mode?: 'days' | 'weeks' | 'months' | 'years'; layout_mode?: 'default' | 'distance_time_pace' | 'distance_time_speed' | 'indoor' | 'strength' }) =>
             updateActivitySettings(type, newSettings),
         onSuccess: (updated) => {
             queryClient.setQueryData(['activitySettings', type], updated);
@@ -216,8 +229,10 @@ export default function ActivityTypePage({
             {/* Configured Top KPI cards */}
             {settings.layout_mode === 'indoor' ? (
                 <IndoorKpis stats={stats} />
-            ) : settings.layout_mode === 'distance_time' ? (
-                <DistanceTimeKpis stats={stats} />
+            ) : settings.layout_mode === 'distance_time_pace' ? (
+                <DistanceTimeKpis stats={stats} showAsSpeed={false} />
+            ) : settings.layout_mode === 'distance_time_speed' ? (
+                <DistanceTimeKpis stats={stats} showAsSpeed={true} />
             ) : settings.layout_mode === 'strength' ? (
                 <StrengthKpis stats={stats} />
             ) : (
@@ -263,8 +278,8 @@ export default function ActivityTypePage({
                             {/* Split Mode setting */}
                             <div className="space-y-2.5">
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Timeline Grouping</p>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {(['days', 'weeks', 'months'] as const).map((mode) => (
+                                <div className="grid grid-cols-4 gap-2">
+                                    {(['days', 'weeks', 'months', 'years'] as const).map((mode) => (
                                         <button
                                             key={mode}
                                             onClick={() => updateSettingsMutation.mutate({ split_mode: mode })}
@@ -289,7 +304,8 @@ export default function ActivityTypePage({
                                 <div className="flex flex-col gap-2">
                                     {[
                                         { key: 'default', name: 'Default', desc: 'Sport-specific default layout and KPIs' },
-                                        { key: 'distance_time', name: 'Distance & Time', desc: 'Focuses on mileage, duration, and pace (min/km)' },
+                                        { key: 'distance_time_pace', name: 'Dist & Time (min/km)', desc: 'Distance, duration, pace (min/km)' },
+                                        { key: 'distance_time_speed', name: 'Dist & Time (km/h)', desc: 'Distance, duration, speed (km/h)' },
                                         { key: 'indoor', name: 'Indoor Sports', desc: 'Omit distance/pace; shows duration, heart rate, and calories' },
                                         { key: 'strength', name: 'Strength', desc: 'Focuses on sets, reps and weight' }
                                     ].map((theme) => (

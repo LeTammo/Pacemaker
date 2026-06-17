@@ -2,8 +2,8 @@ import api from './api';
 
 export interface ActivitySettings {
   activity_type: string;
-  split_mode: 'days' | 'weeks' | 'months';
-  layout_mode: 'default' | 'distance_time' | 'indoor' | 'strength';
+  split_mode: 'days' | 'weeks' | 'months' | 'years';
+  layout_mode: 'default' | 'distance_time_pace' | 'distance_time_speed' | 'indoor' | 'strength';
 }
 
 export const getActivitySettings = async (activityType: string): Promise<ActivitySettings> => {
