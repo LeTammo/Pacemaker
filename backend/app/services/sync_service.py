@@ -322,6 +322,12 @@ def transform_sleep(raw: dict, calendar_date: date) -> dict | None:
     daily = raw.get("dailySleepDTO")
     if not daily:
         return None
+    
+    # Only sync if there is tracked sleep time and a valid DTO ID
+    sleep_time = _safe_int(daily.get("sleepTimeSeconds"))
+    if not sleep_time or not daily.get("id"):
+        return None
+
     return {
         "calendar_date": calendar_date,
         "sleep_time_seconds": _safe_int(daily.get("sleepTimeSeconds")),
@@ -335,8 +341,10 @@ def transform_sleep(raw: dict, calendar_date: date) -> dict | None:
         "sleep_end": _parse_dt(daily.get("sleepEndTimestampGMT")),
         "sleep_score": _safe_int(daily.get("sleepScores", {}).get("overall", {}).get("value")),
         "sleep_score_feedback": daily.get("sleepScores", {}).get("overall", {}).get("qualifierKey"),
-        "average_hrv": _safe_float(daily.get("avgSleepHRV")),
-        "average_resting_heart_rate": _safe_int(daily.get("avgSleepHR")),
+        "sleep_score_insight": daily.get("sleepScores", {}).get("overall", {}).get("qualifierKey"),
+        # HRV and resting HR live at the top level of the raw payload, not in dailySleepDTO
+        "average_hrv": _safe_float(raw.get("avgOvernightHrv") or daily.get("avgSleepHRV")),
+        "average_resting_heart_rate": _safe_int(raw.get("restingHeartRate") or daily.get("avgSleepHR")),
         "average_sp_o2": _safe_float(daily.get("averageSpO2Value")),
         "raw_data": raw,
     }

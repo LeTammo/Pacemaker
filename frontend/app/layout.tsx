@@ -15,7 +15,8 @@ import {
     IconMenu,
     IconClose,
     ActivityIcon,
-    IconEdit
+    IconEdit,
+    IconSleep
 } from '@/components/ui/Icons';
 import './globals.css';
 
@@ -135,6 +136,12 @@ function NavigationSidebar({ children }: { children: React.ReactNode }) {
                             href="/"
                             label="Dashboard"
                             icon={<IconDashboard />}
+                            onClick={() => setIsSidebarOpen(false)}
+                        />
+                        <NavLink
+                            href="/sleep"
+                            label="Sleep"
+                            icon={<IconSleep />}
                             onClick={() => setIsSidebarOpen(false)}
                         />
 
