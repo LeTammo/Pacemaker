@@ -138,12 +138,15 @@ function NavigationSidebar({ children }: { children: React.ReactNode }) {
                             icon={<IconDashboard />}
                             onClick={() => setIsSidebarOpen(false)}
                         />
-                        <NavLink
-                            href="/sleep"
-                            label="Sleep"
-                            icon={<IconSleep />}
-                            onClick={() => setIsSidebarOpen(false)}
-                        />
+                        {/* Sleep — only for authenticated users */}
+                        {isAuthenticated && (
+                            <NavLink
+                                href="/sleep"
+                                label="Sleep"
+                                icon={<IconSleep />}
+                                onClick={() => setIsSidebarOpen(false)}
+                            />
+                        )}
 
                         {/* Divider + sport links */}
                         {activityTypes.length > 0 && (
@@ -276,18 +279,20 @@ function SyncFooterAction() {
 
     // Form inputs
     const [pin, setPin] = useState('');
-    const [days, setDays] = useState(7);
+    const [days, setDays] = useState(1);
     const [syncActivities, setSyncActivities] = useState(true);
     const [syncSleep, setSyncSleep] = useState(true);
-    const [syncHealth, setSyncHealth] = useState(true);
     const [error, setError] = useState('');
+
+    // Pin is only required for syncs covering more than 7 days
+    const pinRequired = days >= 14;
 
     const handleSyncSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         
-        if (!pin) {
-            setError('Sync pin is required');
+        if (pinRequired && !pin) {
+            setError('Sync pin is required for syncs of 14 days or more.');
             return;
         }
 
@@ -299,9 +304,9 @@ function SyncFooterAction() {
                     days,
                     sync_activities: syncActivities,
                     sync_sleep: syncSleep,
-                    sync_health: syncHealth,
+                    sync_health: false,
                 },
-                { headers: { 'X-Sync-Pin': pin } }
+                { headers: { 'X-Sync-Pin': pinRequired ? pin : '' } }
             );
             await Promise.all([
                 qc.invalidateQueries({ queryKey: ['activities'] }),
@@ -359,18 +364,21 @@ function SyncFooterAction() {
                         <h2 className="text-base font-bold text-white mb-4 uppercase tracking-wide">Configure Sync</h2>
 
                         <form onSubmit={handleSyncSubmit} className="space-y-4">
-                            {/* Sync Pin */}
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Sync Pin</label>
-                                <input
-                                    type="password"
-                                    placeholder="••••••••"
-                                    required
-                                    value={pin}
-                                    onChange={(e) => setPin(e.target.value)}
-                                    className="w-full px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
-                                />
-                            </div>
+                            {/* Sync Pin — only shown/required for 14+ days */}
+                            {pinRequired && (
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Sync Pin <span className="text-red-400">*</span></label>
+                                    <input
+                                        type="password"
+                                        placeholder="••••••••"
+                                        required
+                                        value={pin}
+                                        onChange={(e) => setPin(e.target.value)}
+                                        className="w-full px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                                    />
+                                    <p className="text-[10px] text-zinc-600 font-medium">Required for syncs of 14 days or more.</p>
+                                </div>
+                            )}
 
                             {/* Sync Days */}
                             <div className="space-y-1.5">
@@ -380,15 +388,18 @@ function SyncFooterAction() {
                                     onChange={(e) => setDays(Number(e.target.value))}
                                     className="w-full px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
                                 >
-                                    <option value={1}>1 Day</option>
-                                    <option value={7}>7 Days (Default)</option>
-                                    <option value={14}>14 Days</option>
-                                    <option value={30}>30 Days</option>
-                                    <option value={90}>90 Days</option>
-                                    <option value={180}>180 Days</option>
-                                    <option value={365}>1 Year</option>
-                                    <option value={2190}>6 Years</option>
+                                    <option value={1}>1 Day (Default)</option>
+                                    <option value={7}>7 Days</option>
+                                    <option value={14}>14 Days 🔒</option>
+                                    <option value={30}>30 Days 🔒</option>
+                                    <option value={90}>90 Days 🔒</option>
+                                    <option value={180}>180 Days 🔒</option>
+                                    <option value={365}>1 Year 🔒</option>
+                                    <option value={2190}>6 Years 🔒</option>
                                 </select>
+                                {pinRequired && (
+                                    <p className="text-[10px] text-amber-400/80 font-semibold">🔒 Pin required for this range</p>
+                                )}
                             </div>
 
                             {/* Data Types checkboxes */}
@@ -412,15 +423,6 @@ function SyncFooterAction() {
                                             className="rounded border-zinc-800 bg-zinc-950 text-indigo-500 focus:ring-0 cursor-pointer w-4 h-4"
                                         />
                                         <span className="text-xs font-semibold text-zinc-300">Sleep Data</span>
-                                    </label>
-                                    <label className="flex items-center gap-3 px-3 py-2 bg-zinc-950/60 border border-zinc-850 rounded-xl cursor-pointer hover:border-zinc-700 transition-colors select-none">
-                                        <input
-                                            type="checkbox"
-                                            checked={syncHealth}
-                                            onChange={(e) => setSyncHealth(e.target.checked)}
-                                            className="rounded border-zinc-800 bg-zinc-950 text-indigo-500 focus:ring-0 cursor-pointer w-4 h-4"
-                                        />
-                                        <span className="text-xs font-semibold text-zinc-300">Daily Health Stats</span>
                                     </label>
                                 </div>
                             </div>
