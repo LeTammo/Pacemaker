@@ -8,19 +8,24 @@ import { ActivityTimeline } from '@/components/ui/ActivityTimeline';
 
 function DashboardKpiCard({
     value,
+    total,
     line2,
     accent = 'text-indigo-300',
 }: {
     value: number;
+    total?: number;
     line2: string;
     accent?: string;
 }) {
-    const unitWord = value === 1 ? 'Active day' : 'Active days';
+    const unitWord = (value === 1 && (total === 1 || total === undefined)) ? 'Active day' : 'Active days';
     return (
         <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-4 flex items-center gap-3 w-full">
-            <span className={`text-3xl font-black tabular-nums leading-none ${accent}`}>
-                {value}
-            </span>
+            <div className={`flex items-baseline tabular-nums leading-none ${accent}`}>
+                <span className="text-3xl font-black">{value}</span>
+                {total !== undefined && (
+                    <span className="text-sm font-bold opacity-40">/{total}</span>
+                )}
+            </div>
             <div className="flex flex-col text-left leading-tight">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
                     {unitWord}
@@ -73,19 +78,23 @@ export default function DashboardPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <DashboardKpiCard
                     value={stats?.active_days_this_week ?? 0}
+                    total={stats?.total_days_this_week}
                     line2="This week"
                 />
                 <DashboardKpiCard
                     value={stats?.active_days_last_week ?? 0}
+                    total={stats?.total_days_last_week}
                     line2="Last week"
                     accent="text-zinc-300"
                 />
                 <DashboardKpiCard
                     value={stats?.active_days_this_month ?? 0}
+                    total={stats?.total_days_this_month}
                     line2={getMonthName(0)}
                 />
                 <DashboardKpiCard
                     value={stats?.active_days_last_month ?? 0}
+                    total={stats?.total_days_last_month}
                     line2={getMonthName(-1)}
                     accent="text-zinc-300"
                 />

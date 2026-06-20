@@ -121,6 +121,12 @@ async def get_stats(db: AsyncSession = Depends(get_db)):
     active_days_this_month = (await db.execute(active_days_month_q)).scalar_one() or 0
     active_days_last_month = (await db.execute(active_days_last_month_q)).scalar_one() or 0
 
+    # ── Total days in periods (elapsed for current, full for past) ────────────
+    total_days_this_week = (today - this_week_start.date()).days + 1
+    total_days_last_week = 7
+    total_days_this_month = today.day
+    total_days_last_month = (last_month_end.date() - last_month_start.date()).days
+
     # ── Monthly per-sport counts ───────────────────────────────────────────────
     async def count_type_in_range(activity_type_filter, start: datetime, end: datetime) -> int:
         q = select(func.count(Activity.id)).where(
@@ -194,6 +200,10 @@ async def get_stats(db: AsyncSession = Depends(get_db)):
         active_days_last_week=active_days_last_week,
         active_days_this_month=active_days_this_month,
         active_days_last_month=active_days_last_month,
+        total_days_this_week=total_days_this_week,
+        total_days_last_week=total_days_last_week,
+        total_days_this_month=total_days_this_month,
+        total_days_last_month=total_days_last_month,
         average_activities_per_week=round(avg_per_week, 2),
         average_distance_per_week_km=round(avg_distance_per_week_km, 2),
         total_duration_hours=round((total_duration or 0) / 3600.0, 2),
