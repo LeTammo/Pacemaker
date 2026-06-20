@@ -15,13 +15,15 @@ router = APIRouter(prefix="/sync", tags=["sync"])
 async def get_sync_status(db: AsyncSession = Depends(get_db)):
     return await sync_service.get_status(db)
 
-@router.post("/", status_code=202)
+@router.post("", status_code=202)
 async def trigger_sync(
-    req: SyncRequest = SyncRequest(),
+    req: SyncRequest,
     x_sync_pin: str | None = Header(default=None, alias="X-Sync-Pin"),
 ):
-    if not x_sync_pin or not settings.sync_pin or not hmac.compare_digest(x_sync_pin, settings.sync_pin):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid sync pin")
+    # Pin is only required for syncs over 7 days
+    if req.days > 7:
+        if not x_sync_pin or not settings.sync_pin or not hmac.compare_digest(x_sync_pin, settings.sync_pin):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid sync pin")
 
     # Fire-and-forget an async task to perform manual sync
     asyncio.create_task(

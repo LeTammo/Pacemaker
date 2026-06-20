@@ -284,8 +284,8 @@ function SyncFooterAction() {
     const [syncSleep, setSyncSleep] = useState(true);
     const [error, setError] = useState('');
 
-    // Pin is only required for syncs covering more than 7 days
-    const pinRequired = days >= 14;
+    // Pin is only required for syncs over 7 days
+    const pinRequired = days > 7;
 
     const handleSyncSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
