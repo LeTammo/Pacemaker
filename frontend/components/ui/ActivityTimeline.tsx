@@ -451,7 +451,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = (props) => {
                                     let displayMainStat = "";
                                     if ((resolvedLayoutMode === 'strength' || (resolvedLayoutMode === 'default' && autoDetectStrength))) {
                                         if (totalSets && totalReps) {
-                                            displayMainStat = `${totalSets}s · ${totalReps}r`;
+                                            displayMainStat = `${totalSets} sets · ${totalReps} reps`;
                                         } else if (totalSets) {
                                             displayMainStat = `${totalSets} sets`;
                                         } else if (totalReps) {
@@ -469,6 +469,9 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = (props) => {
 
                                     // Determine display name
                                     const displayName = activity.name || activityBadgeLabel(activity.activity_type || '');
+
+                                    // Determine activity time in HH:MM
+                                    const timeStr = new Date(activity.start_time).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
                                     // Heart Rate metrics
                                     const hasHR = !!activity.average_heart_rate;
@@ -489,7 +492,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = (props) => {
                                                     <ActivityIcon type={activity.activity_type || ''} className="w-5.5 h-5.5 text-indigo-300 flex-none" />
                                                     <span className="text-base md:text-lg font-black text-indigo-300 tabular-nums leading-none">{displayMainStat}</span>
                                                 </div>
-                                                <span className="text-sm font-bold text-indigo-300 truncate text-right">{displayName}</span>
+                                                <span className="text-sm font-bold text-indigo-300 truncate text-right">{displayName} {timeStr}</span>
                                             </div>
 
                                             {/* Card body — Optimized: 3-row layout cells in responsive grid */}
@@ -534,19 +537,12 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = (props) => {
                                                         </>
                                                     ) : resolvedLayoutMode === 'strength' ? (
                                                         <>
-                                                            {/* Strength: Sets, Reps, Max Weight, Avg Pause */}
-                                                            {totalSets != null && (
+                                                            {/* Strength: Activity duration, Max Weight, Avg Pause */}
+                                                            {activity.duration_seconds && (
                                                                 <MetricCell3Row
-                                                                    label="Sets"
-                                                                    value={totalSets}
-                                                                    unit="sets"
-                                                                />
-                                                            )}
-                                                            {totalReps != null && (
-                                                                <MetricCell3Row
-                                                                    label="Reps"
-                                                                    value={totalReps}
-                                                                    unit="reps"
+                                                                    label="Duration"
+                                                                    value={formatDuration(activity.duration_seconds)}
+                                                                    unit="time"
                                                                 />
                                                             )}
                                                             {maxWeight != null && maxWeight > 0 && (
