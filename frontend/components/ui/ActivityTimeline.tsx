@@ -466,8 +466,8 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = (props) => {
                                     // Determine display name
                                     const displayName = activity.name || activityBadgeLabel(activity.activity_type || '');
 
-                                    // Determine activity time in HH:MM
-                                    const timeStr = new Date(activity.start_time).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+                                    // Determine activity time in HH:MM for germany
+                                    const timeStr = new Date(activity.start_time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 
                                     // Heart Rate metrics
                                     const hasHR = !!activity.average_heart_rate;
@@ -488,7 +488,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = (props) => {
                                                     <ActivityIcon type={activity.activity_type || ''} className="w-5.5 h-5.5 text-indigo-300 flex-none" />
                                                     <span className="text-base md:text-lg font-black text-indigo-300 tabular-nums leading-none">{displayMainStat}</span>
                                                 </div>
-                                                <span className="text-sm font-bold text-indigo-300 truncate text-right">{displayName} {timeStr}</span>
+                                                <span className="text-sm font-bold text-indigo-300 truncate text-right">{displayName} · {timeStr}</span>
                                             </div>
 
                                             {/* Card body — Optimized: 3-row layout cells in responsive grid */}
