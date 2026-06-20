@@ -49,9 +49,14 @@ export const SplitVisualizer = ({ splits }: { splits: GarminSplit[] | null }) =>
         return aCum - bCum;
     });
 
+    const filteredSplits = orderedSplits.filter(split => {
+        const dist = getSplitDistance(split);
+        return dist !== null && dist >= 60;
+    })
+
     return (
         <div className="flex justify-center gap-2 overflow-x-auto pb-0.5">
-            {orderedSplits.map((split, idx) => {
+            {filteredSplits.map((split, idx) => {
                 const pace = getSplitPaceSeconds(split);
                 const dist = getSplitDistance(split);
                 const paceTier = getPaceHighlightTier(pace);
