@@ -19,15 +19,11 @@ function getSplitPaceSeconds(split: GarminSplit): number | null {
 }
 
 function getSplitDistance(split: GarminSplit): number | null {
-    if (split.distance != null && isFinite(split.distance) && split.distance > 0) {
-        return split.distance;
+    const dist = split.split_distance_m ?? split.distance;
+    if (dist != null && isFinite(dist) && dist > 0) {
+        return dist;
     }
     return null;
-}
-
-function formatSplitDistance(meters: number): string {
-    if (meters >= 950) return (meters / 1000).toFixed(2) + ' km';
-    return Math.round(meters) + ' m';
 }
 
 function getPaceHighlightTier(pace: number | null): 0 | 1 | 2 | 3 {
@@ -65,7 +61,7 @@ export const SplitVisualizer = ({ splits }: { splits: GarminSplit[] | null }) =>
                     <div
                         key={idx}
                         className={`
-                            flex-none w-16 rounded-xl p-2 border transition-colors bg-zinc-800/50 border-zinc-700/40
+                            flex-none w-[70px] rounded-xl p-2 border transition-colors bg-zinc-800/50 border-zinc-700/40
                             ${paceTier === 1
                                 ? 'shadow shadow-emerald-500/35 hover:bg-emerald-500/20 border-emerald-500/50'
                                 : paceTier === 2
@@ -77,14 +73,14 @@ export const SplitVisualizer = ({ splits }: { splits: GarminSplit[] | null }) =>
                         `}
                     >
                         {/* Header */}
-                        <div className="flex items-center justify-between mb-0.5">
+                        <div className="flex items-center justify-center mb-0.5">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
                                 Km {idx + 1}
                             </span>
                         </div>
 
                         {/* Pace */}
-                        <div className="flex items-baseline gap-0.5">
+                        <div className="flex items-baseline justify-center gap-0.5">
                             <p
                                 className={`text-lg font-black leading-none tabular-nums ${
                                     paceTier === 1
@@ -99,14 +95,7 @@ export const SplitVisualizer = ({ splits }: { splits: GarminSplit[] | null }) =>
                                 {formatPaceFromSeconds(pace)}
                             </p>
                         </div>
-                        <p className="text-[10px] text-zinc-500">min/km</p>
-
-                        {/* Distance */}
-                        {dist !== null && (
-                            <p className="text-[11px] text-zinc-400 mt-2 font-medium tabular-nums">
-                                {formatSplitDistance(dist)}
-                            </p>
-                        )}
+                        <p className="text-[10px] text-zinc-500 text-center">min/km</p>
                     </div>
                 );
             })}
