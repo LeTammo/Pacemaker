@@ -449,7 +449,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = (props) => {
                                     }
 
                                     let displayMainStat = "";
-                                    let namePostfix = "";
+                                    let namePostfix = " ";
                                     if ((resolvedLayoutMode === 'strength' || (resolvedLayoutMode === 'default' && autoDetectStrength))) {
                                         if (totalReps) {
                                             displayMainStat = `${totalReps} reps`;
@@ -459,7 +459,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = (props) => {
                                         if (activity.summarized_exercise_sets && activity.summarized_exercise_sets.length > 0) {
                                             const category = activity.summarized_exercise_sets[0].category;
                                             if (category) {
-                                                namePostfix += ` (${activityBadgeLabel(category)}s) `;
+                                                namePostfix += `(${activityBadgeLabel(category)}s) `;
                                             }
                                         }
                                     } else if (resolvedLayoutMode !== 'indoor' && hasDistance) {
