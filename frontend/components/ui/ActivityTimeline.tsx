@@ -449,6 +449,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = (props) => {
                                     }
 
                                     let displayMainStat = "";
+                                    let namePostfix = "";
                                     if ((resolvedLayoutMode === 'strength' || (resolvedLayoutMode === 'default' && autoDetectStrength))) {
                                         if (totalReps) {
                                             displayMainStat = `${totalReps} reps`;
@@ -458,7 +459,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = (props) => {
                                         if (activity.summarized_exercise_sets && activity.summarized_exercise_sets.length > 0) {
                                             const category = activity.summarized_exercise_sets[0].category;
                                             if (category) {
-                                                displayMainStat += ` · ${activityBadgeLabel(category)}`;
+                                                namePostfix += ` (${activityBadgeLabel(category)})`;
                                             }
                                         }
                                     } else if (resolvedLayoutMode !== 'indoor' && hasDistance) {
@@ -494,7 +495,11 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = (props) => {
                                                     <ActivityIcon type={activity.activity_type || ''} className="w-5.5 h-5.5 text-indigo-300 flex-none" />
                                                     <span className="text-base md:text-lg font-black text-indigo-300 tabular-nums leading-none">{displayMainStat}</span>
                                                 </div>
-                                                <span className="text-sm font-bold text-indigo-300 truncate text-right">{displayName} · {timeStr}</span>
+                                                <span className="text-sm font-bold text-indigo-300 truncate text-right">
+                                                    {displayName}
+                                                    {namePostfix}
+                                                    · {timeStr}
+                                                </span>
                                             </div>
 
                                             {/* Card body — Optimized: 3-row layout cells in responsive grid */}
