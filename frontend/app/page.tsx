@@ -15,7 +15,7 @@ function DashboardKpiCard({
     line2: string;
     accent?: string;
 }) {
-    const activityWord = value === 1 ? 'Activity' : 'Activities';
+    const unitWord = value === 1 ? 'Active day' : 'Active days';
     return (
         <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-4 flex items-center gap-3 w-full">
             <span className={`text-3xl font-black tabular-nums leading-none ${accent}`}>
@@ -23,7 +23,7 @@ function DashboardKpiCard({
             </span>
             <div className="flex flex-col text-left leading-tight">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-                    {activityWord}
+                    {unitWord}
                 </span>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
                     {line2}
@@ -72,20 +72,20 @@ export default function DashboardPage() {
             {/* KPI Grid — 4 cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <DashboardKpiCard
-                    value={stats?.activities_this_week ?? 0}
+                    value={stats?.active_days_this_week ?? 0}
                     line2="This week"
                 />
                 <DashboardKpiCard
-                    value={stats?.activities_last_week ?? 0}
+                    value={stats?.active_days_last_week ?? 0}
                     line2="Last week"
                     accent="text-zinc-300"
                 />
                 <DashboardKpiCard
-                    value={stats?.activities_this_month ?? 0}
+                    value={stats?.active_days_this_month ?? 0}
                     line2={getMonthName(0)}
                 />
                 <DashboardKpiCard
-                    value={stats?.activities_last_month ?? 0}
+                    value={stats?.active_days_last_month ?? 0}
                     line2={getMonthName(-1)}
                     accent="text-zinc-300"
                 />

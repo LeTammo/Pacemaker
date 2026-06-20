@@ -102,6 +102,25 @@ async def get_stats(db: AsyncSession = Depends(get_db)):
     activities_this_month = (await db.execute(month_q)).scalar_one() or 0
     activities_last_month = (await db.execute(last_month_all_q)).scalar_one() or 0
 
+    # ── Weekly/monthly active days counts (distinct days) ─────────────────────
+    active_days_week_q = select(func.count(func.distinct(func.date(Activity.start_time)))).where(
+        Activity.start_time >= this_week_start, Activity.start_time < this_week_end
+    )
+    active_days_last_week_q = select(func.count(func.distinct(func.date(Activity.start_time)))).where(
+        Activity.start_time >= last_week_start, Activity.start_time < last_week_end
+    )
+    active_days_month_q = select(func.count(func.distinct(func.date(Activity.start_time)))).where(
+        Activity.start_time >= this_month_start, Activity.start_time < this_month_end
+    )
+    active_days_last_month_q = select(func.count(func.distinct(func.date(Activity.start_time)))).where(
+        Activity.start_time >= last_month_start, Activity.start_time < last_month_end
+    )
+
+    active_days_this_week = (await db.execute(active_days_week_q)).scalar_one() or 0
+    active_days_last_week = (await db.execute(active_days_last_week_q)).scalar_one() or 0
+    active_days_this_month = (await db.execute(active_days_month_q)).scalar_one() or 0
+    active_days_last_month = (await db.execute(active_days_last_month_q)).scalar_one() or 0
+
     # ── Monthly per-sport counts ───────────────────────────────────────────────
     async def count_type_in_range(activity_type_filter, start: datetime, end: datetime) -> int:
         q = select(func.count(Activity.id)).where(
@@ -171,6 +190,10 @@ async def get_stats(db: AsyncSession = Depends(get_db)):
         activities_last_week=activities_last_week,
         activities_this_month=activities_this_month,
         activities_last_month=activities_last_month,
+        active_days_this_week=active_days_this_week,
+        active_days_last_week=active_days_last_week,
+        active_days_this_month=active_days_this_month,
+        active_days_last_month=active_days_last_month,
         average_activities_per_week=round(avg_per_week, 2),
         average_distance_per_week_km=round(avg_distance_per_week_km, 2),
         total_duration_hours=round((total_duration or 0) / 3600.0, 2),

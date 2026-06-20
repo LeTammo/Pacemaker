@@ -29,6 +29,10 @@ class ActivityStats(BaseModel):
     activities_last_week: int = 0
     activities_this_month: int
     activities_last_month: int = 0
+    active_days_this_week: int = 0
+    active_days_last_week: int = 0
+    active_days_this_month: int = 0
+    active_days_last_month: int = 0
     average_activities_per_week: float
     average_distance_per_week_km: float
     total_duration_hours: float
