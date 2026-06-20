@@ -455,6 +455,12 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = (props) => {
                                         } else {
                                             displayMainStat = activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00';
                                         }
+                                        if (activity.summarized_exercise_sets && activity.summarized_exercise_sets.length > 0) {
+                                            const category = activity.summarized_exercise_sets[0].category;
+                                            if (category) {
+                                                displayMainStat += ` · ${activityBadgeLabel(category)}`;
+                                            }
+                                        }
                                     } else if (resolvedLayoutMode !== 'indoor' && hasDistance) {
                                         displayMainStat = `${distKm} km`;
                                     } else {
