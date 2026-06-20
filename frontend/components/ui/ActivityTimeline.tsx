@@ -450,11 +450,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = (props) => {
 
                                     let displayMainStat = "";
                                     if ((resolvedLayoutMode === 'strength' || (resolvedLayoutMode === 'default' && autoDetectStrength))) {
-                                        if (totalSets && totalReps) {
-                                            displayMainStat = `${totalSets} sets · ${totalReps} reps`;
-                                        } else if (totalSets) {
-                                            displayMainStat = `${totalSets} sets`;
-                                        } else if (totalReps) {
+                                        if (totalReps) {
                                             displayMainStat = `${totalReps} reps`;
                                         } else {
                                             displayMainStat = activity.duration_seconds ? formatDuration(activity.duration_seconds) : '0:00';
@@ -550,6 +546,13 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = (props) => {
                                                                     label="Max Weight"
                                                                     value={maxWeight}
                                                                     unit="kg"
+                                                                />
+                                                            )}
+                                                            {totalSets != null && (
+                                                                <MetricCell3Row
+                                                                    label="Sets"
+                                                                    value={totalSets}
+                                                                    unit="sets"
                                                                 />
                                                             )}
                                                             {avgPauseBetweenSetsSeconds !== null && (
