@@ -30,6 +30,7 @@ export interface Activity {
   activity_type: string;
   activity_type_key: string | null;
   start_time: string;
+  start_time_local: string;
   duration_seconds: number | null;
   elapsed_duration_seconds: number | null;
   moving_duration_seconds: number | null;

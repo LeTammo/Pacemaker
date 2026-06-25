@@ -474,7 +474,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = (props) => {
                                     const displayName = activity.name || activityBadgeLabel(activity.activity_type || '');
 
                                     // Determine activity time in HH:MM for germany
-                                    const timeStr = new Date(activity.start_time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                                    const timeStr = new Date(activity.start_time_local).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 
                                     // Heart Rate metrics
                                     const hasHR = !!activity.average_heart_rate;
