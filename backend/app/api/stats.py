@@ -122,13 +122,17 @@ async def get_stats(db: AsyncSession = Depends(get_db)):
     active_days_last_month = (await db.execute(active_days_last_month_q)).scalar_one() or 0
 
     # ── Total days in periods (elapsed for current, full for past) ────────────
-    total_days_this_week = (today - this_week_start.date()).days
-    total_days_last_week = 7
-    total_days_this_month = today.day
-    total_days_last_month = (last_month_end.date() - last_month_start.date()).days
+    # Check if any activity today to decide if we include today in the count
+    today_dt = datetime.combine(today, datetime.min.time())
+    has_activity_today_q = select(func.count(Activity.id)).where(
+        Activity.start_time >= today_dt, Activity.start_time < today_dt + timedelta(days=1)
+    )
+    has_activity_today = (await db.execute(has_activity_today_q)).scalar_one() > 0
 
-    if (total_days_this_week + 1 == active_days_this_week):
-        total_days_this_week += 1  # Include today if there's an activity today
+    total_days_this_week = (today - this_week_start.date()).days + (1 if has_activity_today else 0)
+    total_days_last_week = 7
+    total_days_this_month = (today.day - 1) + (1 if has_activity_today else 0)
+    total_days_last_month = (last_month_end.date() - last_month_start.date()).days
 
     # ── Monthly per-sport counts ───────────────────────────────────────────────
     async def count_type_in_range(activity_type_filter, start: datetime, end: datetime) -> int:
