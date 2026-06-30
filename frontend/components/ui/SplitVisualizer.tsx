@@ -39,15 +39,15 @@ export const SplitVisualizer = ({ splits }: { splits: GarminSplit[] | null }) =>
         return null;
     }
 
-    const orderedSplits = [...splits].sort((a, b) => {
-        const aCum = a.cumulative_time_s ?? a.duration ?? Number.MAX_SAFE_INTEGER;
-        const bCum = b.cumulative_time_s ?? b.duration ?? Number.MAX_SAFE_INTEGER;
-        return aCum - bCum;
-    });
+    // const orderedSplits = [...splits].sort((a, b) => {
+    //     const aCum = a.cumulative_time_s ?? a.duration ?? Number.MAX_SAFE_INTEGER;
+    //     const bCum = b.cumulative_time_s ?? b.duration ?? Number.MAX_SAFE_INTEGER;
+    //     return aCum - bCum;
+    // });
 
-    const filteredSplits = orderedSplits.filter(split => {
+    const filteredSplits = [...splits].filter(split => {
         const dist = getSplitDistance(split);
-        return dist !== null && dist >= 60;
+        return dist !== null && dist >= 60 && split.split_time_s && split.split_time_s > 0;
     })
 
     return (
