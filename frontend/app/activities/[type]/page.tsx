@@ -3,7 +3,7 @@ import { use, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getActivities } from '@/lib/activities';
 import { getActivityStats } from '@/lib/stats';
-import { getActivitySettings, updateActivitySettings } from '@/lib/settings';
+import { getActivitySettings, updateActivitySettings, GoalUnit } from '@/lib/settings';
 import { ActivityTimeline } from '@/components/ui/ActivityTimeline';
 import { useAuth } from '@/lib/auth';
 import { IconSettings, IconClose } from '@/components/ui/Icons';
@@ -200,16 +200,17 @@ export default function ActivityTypePage({
         queryFn: () => getActivitySettings(type),
     });
 
-    const settings = settingsData || { split_mode: 'days', layout_mode: 'default' };
+    const settings = settingsData || { split_mode: 'days', layout_mode: 'default', goal_unit: 'minutes' as const, goal_value: null };
 
     // Mutation to update settings in DB instantly
     const updateSettingsMutation = useMutation({
-        mutationFn: (newSettings: { split_mode?: 'days' | 'weeks' | 'months' | 'years'; layout_mode?: 'default' | 'distance_time_pace' | 'distance_time_speed' | 'indoor' | 'strength' }) =>
+        mutationFn: (newSettings: { split_mode?: 'days' | 'weeks' | 'months' | 'years'; layout_mode?: 'default' | 'distance_time_pace' | 'distance_time_speed' | 'indoor' | 'strength'; goal_unit?: GoalUnit; goal_value?: number | null }) =>
             updateActivitySettings(type, newSettings),
         onSuccess: (updated) => {
             queryClient.setQueryData(['activitySettings', type], updated);
         },
     });
+
 
     return (
         <main className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 w-full relative">
@@ -323,6 +324,52 @@ export default function ActivityTypePage({
                                         </button>
                                     ))}
                                 </div>
+                            </div>
+
+                            {/* Daily Goal setting */}
+                            <div className="space-y-2.5">
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Daily Goal</p>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {([
+                                        { key: 'minutes', label: 'Minutes' },
+                                        { key: 'km', label: 'Kilometers' },
+                                        { key: 'reps', label: 'Reps' },
+                                    ] as const).map((u) => (
+                                        <button
+                                            key={u.key}
+                                            onClick={() => updateSettingsMutation.mutate({ goal_unit: u.key })}
+                                            className={`cursor-pointer py-2 px-3 rounded-xl border text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
+                                                settings.goal_unit === u.key
+                                                    ? 'bg-indigo-500/10 text-indigo-300 border-indigo-500/35 shadow-lg'
+                                                    : 'bg-zinc-950 border-zinc-850 text-zinc-400 hover:border-zinc-700 hover:text-white'
+                                            }`}
+                                        >
+                                            {u.label}
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        key={settings.goal_unit}
+                                        type="number"
+                                        min={0}
+                                        step={1}
+                                        defaultValue={settings.goal_value ?? ''}
+                                        placeholder={settings.goal_unit === 'km' ? '5' : settings.goal_unit === 'reps' ? '50' : '30'}
+                                        onBlur={(e) => {
+                                            const raw = e.target.value.trim();
+                                            const value = raw === '' ? null : Math.max(0, Number(raw));
+                                            updateSettingsMutation.mutate({ goal_value: value });
+                                        }}
+                                        className="w-28 py-2 px-3 rounded-xl border border-zinc-850 bg-zinc-950 text-sm font-bold text-white tabular-nums focus:outline-none focus:border-indigo-500/50"
+                                    />
+                                    <span className="text-xs font-bold text-zinc-500">
+                                        {settings.goal_unit === 'km' ? 'km / day' : settings.goal_unit === 'reps' ? 'reps / day' : 'minutes / day'}
+                                    </span>
+                                </div>
+                                <p className="text-[10px] text-zinc-500 leading-normal">
+                                    Used by the yearly overview heatmap to scale color intensity. Defaults to 30 min, 5 km, or 50 reps per day if unset.
+                                </p>
                             </div>
                         </div>
                     </div>

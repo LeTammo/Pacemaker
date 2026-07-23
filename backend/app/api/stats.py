@@ -3,7 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.db.database import get_db
 from app.models.activity import Activity
-from app.schemas.stats import StatsResponse, ActivityStats, SportStatsResponse
+from app.models.settings import ActivitySettings
+from app.schemas.stats import StatsResponse, ActivityStats, SportStatsResponse, CalendarResponse, CalendarDay
 from datetime import date, datetime, timedelta
 
 router = APIRouter(prefix="/stats", tags=["stats"])
@@ -231,6 +232,77 @@ async def get_stats(db: AsyncSession = Depends(get_db)):
         avg_swim_pace_this_week_seconds=avg_swim_pace_this_week,
         avg_swim_pace_last_week_seconds=avg_swim_pace_last_week,
     )
+
+
+DEFAULT_GOALS_BY_UNIT = {
+    "minutes": 30.0,
+    "km": 5.0,
+    "reps": 50.0,
+}
+
+
+@router.get("/calendar", response_model=CalendarResponse)
+async def get_calendar(year: int | None = None, db: AsyncSession = Depends(get_db)):
+    target_year = year or date.today().year
+    year_start = datetime(target_year, 1, 1)
+    year_end = datetime(target_year + 1, 1, 1)
+
+    day_col = func.date(Activity.start_time_local, type_=Activity.start_time.type)
+
+    goals_q = select(ActivitySettings.activity_type, ActivitySettings.goal_unit, ActivitySettings.goal_value)
+    goal_by_type = {row[0]: (row[1], row[2]) for row in (await db.execute(goals_q)).all()}
+
+    rows_q = (
+        select(
+            day_col.label("day"),
+            Activity.activity_type,
+            Activity.duration_seconds,
+            Activity.distance_meters,
+            Activity.total_reps,
+        )
+        .where(Activity.start_time_local >= year_start, Activity.start_time_local < year_end)
+    )
+    rows = (await db.execute(rows_q)).all()
+
+    by_day: dict[str, dict] = {}
+    for row in rows:
+        day = row.day
+        bucket = by_day.setdefault(
+            day, {"count": 0, "distance_m": 0.0, "duration_s": 0.0, "reps": 0, "types": set(), "intensity": 0.0}
+        )
+        bucket["count"] += 1
+        bucket["distance_m"] += row.distance_meters or 0
+        bucket["duration_s"] += row.duration_seconds or 0
+        bucket["reps"] += row.total_reps or 0
+        bucket["types"].add(row.activity_type)
+
+        unit, goal_value = goal_by_type.get(row.activity_type, ("minutes", None))
+        goal = goal_value or DEFAULT_GOALS_BY_UNIT.get(unit, DEFAULT_GOALS_BY_UNIT["minutes"])
+
+        if unit == "km":
+            progress = (row.distance_meters or 0) / 1000.0
+        elif unit == "reps":
+            progress = row.total_reps or 0
+        else:
+            progress = (row.duration_seconds or 0) / 60.0
+
+        if goal > 0:
+            bucket["intensity"] += progress / goal
+
+    days = [
+        CalendarDay(
+            date=day,
+            count=b["count"],
+            distance_km=round(b["distance_m"] / 1000.0, 2),
+            duration_seconds=b["duration_s"],
+            total_reps=b["reps"],
+            activity_types=sorted(b["types"]),
+            intensity=round(min(b["intensity"], 1.0), 4),
+        )
+        for day, b in by_day.items()
+    ]
+
+    return CalendarResponse(days=days, year=target_year)
 
 
 @router.get("/activity/{activity_type}", response_model=SportStatsResponse)

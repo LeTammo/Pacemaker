@@ -18,7 +18,9 @@ async def get_activity_settings(activity_type: str, db: AsyncSession = Depends(g
         return ActivitySettings(
             activity_type=activity_type,
             split_mode="days",
-            layout_mode="default"
+            layout_mode="default",
+            goal_unit="minutes",
+            goal_value=None,
         )
     return settings
 
@@ -37,7 +39,9 @@ async def update_activity_settings(
         settings = ActivitySettings(
             activity_type=activity_type,
             split_mode=payload.split_mode or "days",
-            layout_mode=payload.layout_mode or "default"
+            layout_mode=payload.layout_mode or "default",
+            goal_unit=payload.goal_unit or "minutes",
+            goal_value=payload.goal_value,
         )
         db.add(settings)
     else:
@@ -45,6 +49,10 @@ async def update_activity_settings(
             settings.split_mode = payload.split_mode
         if payload.layout_mode is not None:
             settings.layout_mode = payload.layout_mode
+        if payload.goal_unit is not None:
+            settings.goal_unit = payload.goal_unit
+        if "goal_value" in payload.model_fields_set:
+            settings.goal_value = payload.goal_value
 
     await db.commit()
     await db.refresh(settings)
