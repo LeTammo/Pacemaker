@@ -5,6 +5,7 @@ import { getActivities } from '@/lib/activities';
 import { getActivityStats } from '@/lib/stats';
 import { getActivitySettings, updateActivitySettings, GoalUnit } from '@/lib/settings';
 import { ActivityTimeline } from '@/components/ui/ActivityTimeline';
+import { ActivityListView } from '@/components/ui/ActivityListView';
 import { useAuth } from '@/lib/auth';
 import { IconSettings, IconClose } from '@/components/ui/Icons';
 
@@ -200,11 +201,11 @@ export default function ActivityTypePage({
         queryFn: () => getActivitySettings(type),
     });
 
-    const settings = settingsData || { split_mode: 'days', layout_mode: 'default', goal_unit: 'minutes' as const, goal_value: null };
+    const settings = settingsData || { split_mode: 'days', layout_mode: 'default', view_mode: 'timeline' as const, goal_unit: 'minutes' as const, goal_value: null };
 
     // Mutation to update settings in DB instantly
     const updateSettingsMutation = useMutation({
-        mutationFn: (newSettings: { split_mode?: 'days' | 'weeks' | 'months' | 'years'; layout_mode?: 'default' | 'distance_time_pace' | 'distance_time_speed' | 'indoor' | 'strength'; goal_unit?: GoalUnit; goal_value?: number | null }) =>
+        mutationFn: (newSettings: { split_mode?: 'days' | 'weeks' | 'months' | 'years'; layout_mode?: 'default' | 'distance_time_pace' | 'distance_time_speed' | 'indoor' | 'strength'; view_mode?: 'timeline' | 'list'; goal_unit?: GoalUnit; goal_value?: number | null }) =>
             updateActivitySettings(type, newSettings),
         onSuccess: (updated) => {
             queryClient.setQueryData(['activitySettings', type], updated);
@@ -248,6 +249,11 @@ export default function ActivityTypePage({
             {/* Timeline */}
             {isLoading ? (
                 <div className="py-12 text-center text-zinc-500 text-sm">Loading activities…</div>
+            ) : settings.view_mode === 'list' ? (
+                <ActivityListView
+                    activities={data?.activities || []}
+                    layoutMode={settings.layout_mode}
+                />
             ) : (
                 <ActivityTimeline
                     activities={data?.activities || []}
@@ -276,7 +282,34 @@ export default function ActivityTypePage({
                         <h2 className="text-base font-bold text-white mb-5 uppercase tracking-wide">Display Settings</h2>
 
                         <div className="space-y-6">
+                            {/* View Mode setting */}
+                            <div className="space-y-2.5">
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Page Layout</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {([
+                                        { key: 'timeline', label: 'Timeline' },
+                                        { key: 'list', label: 'List' },
+                                    ] as const).map((v) => (
+                                        <button
+                                            key={v.key}
+                                            onClick={() => updateSettingsMutation.mutate({ view_mode: v.key })}
+                                            className={`cursor-pointer py-2 px-3 rounded-xl border text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
+                                                settings.view_mode === v.key
+                                                    ? 'bg-indigo-500/10 text-indigo-300 border-indigo-500/35 shadow-lg'
+                                                    : 'bg-zinc-950 border-zinc-850 text-zinc-400 hover:border-zinc-700 hover:text-white'
+                                            }`}
+                                        >
+                                            {v.label}
+                                        </button>
+                                    ))}
+                                </div>
+                                <p className="text-[10px] text-zinc-500 leading-normal">
+                                    Timeline shows every interval, including empty ones. List only shows days with logged activities.
+                                </p>
+                            </div>
+
                             {/* Split Mode setting */}
+                            {settings.view_mode !== 'list' && (
                             <div className="space-y-2.5">
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Timeline Grouping</p>
                                 <div className="grid grid-cols-4 gap-2">
@@ -298,6 +331,7 @@ export default function ActivityTypePage({
                                     Set the interval granularity. Empty intervals will render with a sad emoji 😢.
                                 </p>
                             </div>
+                            )}
 
                             {/* Layout Mode setting */}
                             <div className="space-y-2.5">

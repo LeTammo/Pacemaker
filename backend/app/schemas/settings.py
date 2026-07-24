@@ -7,6 +7,7 @@ class ActivitySettingsResponse(BaseModel):
     activity_type: str
     split_mode: str
     layout_mode: str
+    view_mode: str
     goal_unit: str
     goal_value: float | None = None
 
@@ -14,5 +15,6 @@ class ActivitySettingsResponse(BaseModel):
 class ActivitySettingsUpdate(BaseModel):
     split_mode: str | None = None
     layout_mode: str | None = None
+    view_mode: str | None = None
     goal_unit: str | None = None
     goal_value: float | None = None
